@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "Workday Auto-fill by Antigravity",
+  "version": "1.0.0",
+  "description": "Parse a PDF resume and auto-fill Workday job applications using the Gemini API.",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://*.myworkdayjobs.com/*",
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://*.myworkdayjobs.com/*"],
+      "js": ["pdf.js", "content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["pdf.worker.js"],
+      "matches": ["https://*.myworkdayjobs.com/*"]
+    }
+  ]
+}

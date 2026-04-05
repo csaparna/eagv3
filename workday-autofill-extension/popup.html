@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Workday Autofill</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Workday Auto-fill</h1>
+      <p>Powered by Gemini AI</p>
+    </div>
+
+    <div class="upload-section">
+      <label for="pdfUpload" class="upload-btn">
+        <span>Select Resume (PDF)</span>
+        <input type="file" id="pdfUpload" accept=".pdf" />
+      </label>
+      <div id="fileName" class="file-name">No file chosen</div>
+    </div>
+
+    <div class="action-section">
+      <button id="autofillBtn" class="primary-btn" disabled>Auto-fill Application</button>
+    </div>
+
+    <div id="status" class="status-container"></div>
+  </div>
+
+  <!-- Include PDF.js -->
+  <script src="pdf.js"></script>
+  <!-- Load popup script dynamically as a module to handle secrets -->
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
