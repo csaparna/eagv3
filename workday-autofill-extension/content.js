@@ -122,6 +122,28 @@ function setReactInputValue(inputElement, value) {
 }
 
 async function fillWorkdayForm(data) {
+    // Fill Personal Info
+    if (data.personal_info) {
+        const info = data.personal_info;
+        const firstNameInput = document.querySelector('[data-automation-id="legalNameFirst"], [data-automation-id="firstName"]');
+        const lastNameInput = document.querySelector('[data-automation-id="legalNameLast"], [data-automation-id="lastName"]');
+        const addressLine1Input = document.querySelector('[data-automation-id="addressSection_addressLine1"]');
+        const cityInput = document.querySelector('[data-automation-id="addressSection_city"]');
+        const stateInput = document.querySelector('[data-automation-id="addressSection_countryRegion"]');
+        const postalCodeInput = document.querySelector('[data-automation-id="addressSection_postalCode"]');
+        const emailInput = document.querySelector('[data-automation-id="email"]');
+        const phoneInput = document.querySelector('[data-automation-id="phone"]');
+
+        if (firstNameInput) setReactInputValue(firstNameInput, info.firstName);
+        if (lastNameInput) setReactInputValue(lastNameInput, info.lastName);
+        if (addressLine1Input) setReactInputValue(addressLine1Input, info.addressLine1);
+        if (cityInput) setReactInputValue(cityInput, info.city);
+        if (stateInput) setReactInputValue(stateInput, info.state);
+        if (postalCodeInput) setReactInputValue(postalCodeInput, info.postalCode);
+        if (emailInput) setReactInputValue(emailInput, info.email);
+        if (phoneInput) setReactInputValue(phoneInput, info.phone);
+    }
+
     // Fill Experience
     if (data.experience && data.experience.length > 0) {
         // Workday typical selectors (can vary per deployment)

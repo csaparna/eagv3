@@ -33,6 +33,16 @@ DO NOT INCLUDE MARKDOWN FORMATTING (do not include \`\`\`json). Return raw JSON 
 
 The JSON MUST match this exact structure:
 {
+  "personal_info": {
+    "firstName": "string",
+    "lastName": "string",
+    "addressLine1": "string",
+    "city": "string",
+    "state": "string",
+    "postalCode": "string",
+    "email": "string",
+    "phone": "string"
+  },
   "education": [
     {
       "school": "University Name",
