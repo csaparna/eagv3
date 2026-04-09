@@ -86,7 +86,14 @@ If a field is not found, leave it as an empty string "". Use 2-digit format for 
   });
 
   if (!response.ok) {
-    throw new Error('Gemini API call failed: ' + response.statusText);
+    let errBody = '';
+    try {
+        const errJson = await response.json();
+        errBody = errJson.error && errJson.error.message ? errJson.error.message : JSON.stringify(errJson);
+    } catch(e) {
+        errBody = await response.text();
+    }
+    throw new Error(`API Error ${response.status}: ${errBody}`);
   }
 
   const data = await response.json();

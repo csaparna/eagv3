@@ -1,0 +1,93 @@
+{
+  "personal_info": {
+    "firstName": "Aparna",
+    "lastName": "Chakkalakkal Sankarankutty",
+    "addressLine1": "",
+    "city": "Salt Lake City",
+    "state": "Utah",
+    "postalCode": "84105",
+    "email": "csaparna88@gmail.com",
+    "phone": "3853958015"
+  },
+  "education": [
+    {
+      "school": "University of Utah",
+      "degree": "Ph.D.",
+      "major": "Biomedical Engineering",
+      "startMonth": "",
+      "startYear": "2016",
+      "endMonth": "",
+      "endYear": "2021"
+    },
+    {
+      "school": "National Institute of Technology Allahabad",
+      "degree": "Masters",
+      "major": "Biomedical Engineering",
+      "startMonth": "",
+      "startYear": "2011",
+      "endMonth": "",
+      "endYear": "2013"
+    },
+    {
+      "school": "Government Engineering College Thrissur",
+      "degree": "Bachelors",
+      "major": "Electrical and Electronics Engineering",
+      "startMonth": "",
+      "startYear": "2005",
+      "endMonth": "",
+      "endYear": "2009"
+    }
+  ],
+  "experience": [
+    {
+      "title": "Data Scientist / AI Product Engineer",
+      "company": "Operio (previously Roadz)",
+      "location": "California (remote)",
+      "startMonth": "02",
+      "startYear": "2025",
+      "endMonth": "",
+      "endYear": "",
+      "description": "• Collaborated with CEO, CTO, project manager, SMEs, frontend and backend engineers, and QA to align and accelerate the improvement of the AI products for fleet management.\n• Improved the quality of an agentic AI system that generates SQL query-based reports by context engineering using Langsmith-based testing of business rules and database schema definitions in datahub, including code fixes and feature enhancements.\n• Designed and implemented quantitative risk metrics for individual vehicles and fleets in collaboration with C-suite and frontend developers, enabling data-driven decision-making in insurance underwriting.\n• Delivered high-impact predictive ML models to assess road accident risk from driving behavior under a stringent deadline for a global insurance client, utilizing Scikit-learn, Polars, and MLflow.\n• Actively utilized AI-assisted and AI-collaborrated development environments by providing concise plans and directions."
+    },
+    {
+      "title": "Machine learning engineer",
+      "company": "Allurion",
+      "location": "Massachusetts (remote)",
+      "startMonth": "10",
+      "startYear": "2023",
+      "endMonth": "11",
+      "endYear": "2024",
+      "description": "• Owned the end-to-end generative AI virtual health coach product covering design, code, test, deployment and maintenance in collaboration with support engineers, product safety, and subject matter experts.\n• Improved patient experience with prompt engineering, RAG and vector DB, incorporating user experience feedback; decreased cost by 95% and increased engagement by 25%.\n• Added quality control elements in the internal review system and created observability metrics with Lambda, Glue and S3.\n• Published Power BI dashboard to monitor engagement connecting to Snowflake.\n• Troubleshot data backend issues for the customer success team using SQL on PostgreSQL database.\n• Created a fine-tuned Generative AI Model of patient chats that require escalation to clinics.\n• Leveraged ML models and Natural Language Processing to create analytics on themes and languages of conversations."
+    },
+    {
+      "title": "Research and AI Engineer",
+      "company": "Biolexis Therapeutics",
+      "location": "Utah",
+      "startMonth": "01",
+      "startYear": "2023",
+      "endMonth": "08",
+      "endYear": "2023",
+      "description": "• Implemented high throughput prediction of drug target affinity and toxicity by building classification and regression models using Scikit-learn, XGBoost and Ray on Anyscale.\n• Enabled interactive visualization of results from regression and clustering models by creating a web app for custom data uploading and processing using Streamlit and Plotly.\n• Developed a schema for graph database and linked diverse datasets of clinical trials, research publications, diseases and drugs using NLP and named entity recognition models."
+    },
+    {
+      "title": "R&D Engineer",
+      "company": "Xenter",
+      "location": "Utah",
+      "startMonth": "09",
+      "startYear": "2021",
+      "endMonth": "11",
+      "endYear": "2022",
+      "description": "• Developed a computer vision pipeline using transfer learning and deep learning on AWS Sagemaker and deployed the trained model on NVIDIA edge devices for inference.\n• Developed python scripts to extract normal and pathology features from DICOM medical images.\n• Performed preliminary hazard analysis based on user needs and FDA regulations.\n• Initiated a HIPAA compliance project with a cross-functional team and performed SRA.\n• Researched software vendors, sourced RFPs, and evaluated them in collaboration with UX and marketing.\n• Authored research reports with meta-analysis and executive summaries to aid design decisions."
+    },
+    {
+      "title": "Research assistant",
+      "company": "University of Utah",
+      "location": "Utah",
+      "startMonth": "08",
+      "startYear": "2016",
+      "endMonth": "08",
+      "endYear": "2021",
+      "description": "• 8 Publications (4 as First Author), 2 Oral Presentations, 4 Posters.\n• Bio-electric signal analysis - Developed a novel system, protocol and algorithm to measure in-vitro 3D electric field distribution for application in heart tissue. Designed an experiment to correlate different emotions from human volunteers in response to audio-visual stimuli to characteristics of EEG signals.\n• Image processing, analysis and computer modeling - Created microscopic image databases of normal and pathologic tissue structure with unprecedented detail and generated statistics. Discovered significant relationships between electrical properties and structural changes in heart diseases in 3D image stacks using U-Net to segment myocytes and downstream image processing. Characterized cardiac fibrosis using novel image analysis methodology including kmeans clustering, OpenCV, and keras-based CNN that enabled differentiation between etiologies of heart failure.\n• Taught and graded graduate level labs and classes.\n• Mentored two undergraduate students through senior projects."
+    }
+  ]
+}

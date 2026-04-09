@@ -1,8 +1,5 @@
 // content.js
-// Set up PDF.js worker using the packaged web accessible resource
-if (typeof pdfjsLib !== 'undefined') {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('pdf.worker.js');
-}
+// PDF.js removed in favor of offline JSON
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'FILL_WORKDAY_FORM') {
@@ -25,67 +22,35 @@ function injectFloatingWidget() {
     container.innerHTML = `
         <div class="antigravity-header">🚀 Antigravity Autofill</div>
         <div class="antigravity-body">
-            <label for="antigravity-upload" class="antigravity-btn">
-                <span>Provide Resume (PDF)</span>
-                <input type="file" id="antigravity-upload" accept=".pdf" />
-            </label>
+            <button id="antigravity-fill-btn" class="antigravity-btn">Auto-fill Resume</button>
             <div id="antigravity-status">Ready.</div>
         </div>
     `;
 
     document.body.appendChild(container);
 
-    const uploadBtn = document.getElementById('antigravity-upload');
+    const fillBtn = document.getElementById('antigravity-fill-btn');
     const statusDiv = document.getElementById('antigravity-status');
 
-    uploadBtn.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) {
-            statusDiv.textContent = 'No file chosen.';
-            return;
-        }
-
-        statusDiv.textContent = 'Reading PDF...';
+    fillBtn.addEventListener('click', async () => {
+        statusDiv.textContent = 'Reading JSON...';
         statusDiv.style.color = '#60a5fa';
 
         try {
-            const arrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const res = await fetch(chrome.runtime.getURL('resume.json'));
+            if (!res.ok) throw new Error("Could not find resume.json in extension directory.");
             
-            let text = '';
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const content = await page.getTextContent();
-                const pageText = content.items.map(item => item.str).join(' ');
-                text += pageText + '\n';
-            }
-
-            statusDiv.textContent = 'Analyzing with Gemini...';
+            const parsedData = await res.json();
             
-            // Send to background for API request
-            chrome.runtime.sendMessage({ action: 'ANALYZE_WITH_GEMINI', text: text }, (response) => {
-                if (chrome.runtime.lastError) {
-                    statusDiv.textContent = 'Extension Error. Retrying connection...';
-                    statusDiv.style.color = '#ef4444';
-                    return;
-                }
-                
-                if (response.success) {
-                    statusDiv.textContent = 'Filling Form...';
-                    fillWorkdayForm(response.data).then(() => {
-                        statusDiv.textContent = 'Autofill Complete!';
-                        statusDiv.style.color = '#10b981';
-                        setTimeout(() => { statusDiv.textContent = 'Ready.'; statusDiv.style.color = '#f8fafc'; }, 5000);
-                    });
-                } else {
-                    statusDiv.textContent = 'Error: ' + response.error;
-                    statusDiv.style.color = '#ef4444';
-                }
+            statusDiv.textContent = 'Filling Form...';
+            fillWorkdayForm(parsedData).then(() => {
+                statusDiv.textContent = 'Autofill Complete!';
+                statusDiv.style.color = '#10b981';
+                setTimeout(() => { statusDiv.textContent = 'Ready.'; statusDiv.style.color = '#f8fafc'; }, 5000);
             });
-
         } catch (err) {
-            console.error('Antigravity PDF Parse Error:', err);
-            statusDiv.textContent = 'Failed to parse PDF.';
+            console.error(err);
+            statusDiv.textContent = 'Error loading resume.json.';
             statusDiv.style.color = '#ef4444';
         }
     });
@@ -125,14 +90,14 @@ async function fillWorkdayForm(data) {
     // Fill Personal Info
     if (data.personal_info) {
         const info = data.personal_info;
-        const firstNameInput = document.querySelector('[data-automation-id="legalNameFirst"], [data-automation-id="firstName"]');
-        const lastNameInput = document.querySelector('[data-automation-id="legalNameLast"], [data-automation-id="lastName"]');
-        const addressLine1Input = document.querySelector('[data-automation-id="addressSection_addressLine1"]');
-        const cityInput = document.querySelector('[data-automation-id="addressSection_city"]');
-        const stateInput = document.querySelector('[data-automation-id="addressSection_countryRegion"]');
-        const postalCodeInput = document.querySelector('[data-automation-id="addressSection_postalCode"]');
-        const emailInput = document.querySelector('[data-automation-id="email"]');
-        const phoneInput = document.querySelector('[data-automation-id="phone"]');
+        const firstNameInput = document.querySelector('[data-automation-id*="firstName" i], [data-automation-id*="legalNameFirst" i]');
+        const lastNameInput = document.querySelector('[data-automation-id*="lastName" i], [data-automation-id*="legalNameLast" i]');
+        const addressLine1Input = document.querySelector('[data-automation-id*="addressLine1" i]');
+        const cityInput = document.querySelector('[data-automation-id*="city" i]');
+        const stateInput = document.querySelector('[data-automation-id*="countryRegion" i], [data-automation-id*="state" i]');
+        const postalCodeInput = document.querySelector('[data-automation-id*="postalCode" i]');
+        const emailInput = document.querySelector('[data-automation-id*="email" i]');
+        const phoneInput = document.querySelector('[data-automation-id*="phone" i], input[type="tel"]');
 
         if (firstNameInput) setReactInputValue(firstNameInput, info.firstName);
         if (lastNameInput) setReactInputValue(lastNameInput, info.lastName);
