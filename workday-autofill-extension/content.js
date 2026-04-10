@@ -13,54 +13,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-function injectFloatingWidget() {
-    if (document.getElementById('antigravity-autofill-widget')) return;
-
-    const container = document.createElement('div');
-    container.id = 'antigravity-autofill-widget';
-    
-    container.innerHTML = `
-        <div class="antigravity-header">🚀 Antigravity Autofill</div>
-        <div class="antigravity-body">
-            <button id="antigravity-fill-btn" class="antigravity-btn">Auto-fill Resume</button>
-            <div id="antigravity-status">Ready.</div>
-        </div>
-    `;
-
-    document.body.appendChild(container);
-
-    const fillBtn = document.getElementById('antigravity-fill-btn');
-    const statusDiv = document.getElementById('antigravity-status');
-
-    fillBtn.addEventListener('click', async () => {
-        statusDiv.textContent = 'Reading JSON...';
-        statusDiv.style.color = '#60a5fa';
-
-        try {
-            const res = await fetch(chrome.runtime.getURL('resume.json'));
-            if (!res.ok) throw new Error("Could not find resume.json in extension directory.");
-            
-            const parsedData = await res.json();
-            
-            statusDiv.textContent = 'Filling Form...';
-            fillWorkdayForm(parsedData).then(() => {
-                statusDiv.textContent = 'Autofill Complete!';
-                statusDiv.style.color = '#10b981';
-                setTimeout(() => { statusDiv.textContent = 'Ready.'; statusDiv.style.color = '#f8fafc'; }, 5000);
-            });
-        } catch (err) {
-            console.error(err);
-            statusDiv.textContent = 'Error loading resume.json.';
-            statusDiv.style.color = '#ef4444';
-        }
-    });
-}
-
-// Inject the widget onto the Workday page after a short delay
-setTimeout(injectFloatingWidget, 1500);
 
 function setReactInputValue(inputElement, value) {
-    if (!inputElement || !value) return;
+    if (!inputElement || value === undefined || value === null) return;
 
     // Make sure we are actually targeting an input, not a div wrapper
     if (inputElement.tagName !== 'INPUT' && inputElement.tagName !== 'TEXTAREA') {
@@ -78,6 +33,8 @@ function setReactInputValue(inputElement, value) {
         window.HTMLTextAreaElement.prototype,
         'value'
     )?.set;
+
+    inputElement.dispatchEvent(new Event('focus', { bubbles: true }));
 
     if (inputElement.tagName === 'TEXTAREA' && nativeTextAreaValueSetter) {
         nativeTextAreaValueSetter.call(inputElement, value);
@@ -103,7 +60,7 @@ async function fillWorkdayForm(data) {
     const findInput = (selector, container = document) => {
         return extractInput(container.querySelector(selector));
     };
-    
+
     const findInputs = (selector, container = document) => {
         return Array.from(container.querySelectorAll(selector)).map(extractInput).filter(Boolean);
     };
@@ -119,7 +76,7 @@ async function fillWorkdayForm(data) {
                     if (extractInput(el)) return extractInput(el);
                 }
                 if (extractInput(label)) return extractInput(label);
-                
+
                 let curr = label.nextElementSibling;
                 while (curr) {
                     if (extractInput(curr)) return extractInput(curr);
@@ -136,6 +93,7 @@ async function fillWorkdayForm(data) {
     if (data.personal_info) {
         const info = data.personal_info;
         const firstNameInput = findInput('[data-automation-id*="firstName" i], [data-automation-id*="legalNameFirst" i]');
+        const middleNameInput = findInput('[data-automation-id*="middleName" i], [data-automation-id*="legalNameMiddle" i]');
         const lastNameInput = findInput('[data-automation-id*="lastName" i], [data-automation-id*="legalNameLast" i]');
         const addressLine1Input = findInput('[data-automation-id*="addressLine1" i]');
         const cityInput = findInput('[data-automation-id*="city" i]');
@@ -144,24 +102,25 @@ async function fillWorkdayForm(data) {
         const emailInput = findInput('[data-automation-id*="email" i], input[type="email"]');
         const phoneInput = findInput('[data-automation-id*="phone" i], input[type="tel"]');
 
-        if (firstNameInput) setReactInputValue(firstNameInput, info.firstName);
-        if (lastNameInput) setReactInputValue(lastNameInput, info.lastName);
-        if (addressLine1Input) setReactInputValue(addressLine1Input, info.addressLine1);
-        if (cityInput) setReactInputValue(cityInput, info.city);
-        if (stateInput) setReactInputValue(stateInput, info.state);
-        if (postalCodeInput) setReactInputValue(postalCodeInput, info.postalCode);
-        if (emailInput) setReactInputValue(emailInput, info.email);
-        if (phoneInput) setReactInputValue(phoneInput, info.phone);
+        if (firstNameInput) setReactInputValue(firstNameInput, info.firstName || "");
+        if (middleNameInput) setReactInputValue(middleNameInput, info.middleName || "");
+        if (lastNameInput) setReactInputValue(lastNameInput, info.lastName || "");
+        if (addressLine1Input) setReactInputValue(addressLine1Input, info.addressLine1 || "");
+        if (cityInput) setReactInputValue(cityInput, info.city || "");
+        if (stateInput) setReactInputValue(stateInput, info.state || "");
+        if (postalCodeInput) setReactInputValue(postalCodeInput, info.postalCode || "");
+        if (emailInput) setReactInputValue(emailInput, info.email || "");
+        if (phoneInput) setReactInputValue(phoneInput, info.phone || "");
     }
 
     // Fill Experience Block-by-Block
     if (data.experience && data.experience.length > 0) {
         const companyInputs = findInputs('[data-automation-id*="company" i]');
-        
+
         for (let i = 0; i < Math.min(data.experience.length, companyInputs.length); i++) {
             const exp = data.experience[i];
             const companyInput = companyInputs[i];
-            
+
             // Go up the tree to find the overarching Work Experience block container
             let block = companyInput.parentElement;
             while (block && block !== document.body) {
@@ -170,14 +129,14 @@ async function fillWorkdayForm(data) {
                 block = block.parentElement;
             }
             if (!block || block === document.body) {
-                 block = companyInput.closest('[data-automation-id*="workExperience" i]') || companyInput.parentElement.parentElement.parentElement.parentElement;
+                block = companyInput.closest('[data-automation-id*="workExperience" i]') || companyInput.parentElement.parentElement.parentElement.parentElement;
             }
 
             const titleIn = findInput('[data-automation-id*="jobTitle" i]', block) || findByLabel(block, 'job title');
-            const compIn = companyInput; 
+            const compIn = companyInput;
             const locIn = findInput('[data-automation-id*="location" i]', block) || findByLabel(block, 'location');
             const descIn = findInput('[data-automation-id*="description" i], textarea', block) || findByLabel(block, 'role description') || findByLabel(block, 'description');
-            
+
             if (titleIn) setReactInputValue(titleIn, exp.title);
             if (compIn) setReactInputValue(compIn, exp.company);
             if (locIn) setReactInputValue(locIn, exp.location);
@@ -220,19 +179,19 @@ async function fillWorkdayForm(data) {
         for (let i = 0; i < Math.min(data.education.length, schoolInputs.length); i++) {
             const edu = data.education[i];
             const schoolInput = schoolInputs[i];
-            
+
             let block = schoolInput.parentElement;
             while (block && block !== document.body) {
                 if (block.querySelector('label') && block.innerText.includes('Degree')) break;
                 block = block.parentElement;
             }
             if (!block || block === document.body) {
-                 block = schoolInput.closest('[data-automation-id*="education" i]') || schoolInput.parentElement.parentElement.parentElement.parentElement;
+                block = schoolInput.closest('[data-automation-id*="education" i]') || schoolInput.parentElement.parentElement.parentElement.parentElement;
             }
 
             const degreeIn = findInput('[data-automation-id*="degree" i]', block) || findByLabel(block, 'degree');
             const majorIn = findInput('[data-automation-id*="fieldOfStudy" i], [data-automation-id*="major" i]', block) || findByLabel(block, 'field of study') || findByLabel(block, 'major');
-            
+
             if (schoolInput) setReactInputValue(schoolInput, edu.school);
             if (degreeIn) setReactInputValue(degreeIn, edu.degree);
             if (majorIn) setReactInputValue(majorIn, edu.major);
