@@ -47,3 +47,7 @@ Whenever you update your resume, you need to re-parse it so the extension holds 
 
 - **Fields not filling:** Workday forms can vary greatly by employer. Our logic targets the most common `data-automation-id` tags dynamically. If it misses a field, manually fill it. 
 - **Drop-down Menus**: Some Workday components like complex multi-selects or combo-boxes (e.g. Country / State) might require you to manually open the list and click the result even after the text is populated.
+
+## Link for the video of demo of the extension
+
+https://youtu.be/msW2zsHmpHk
