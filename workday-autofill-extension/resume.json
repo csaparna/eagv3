@@ -1,10 +1,12 @@
 {
   "personal_info": {
     "firstName": "Aparna",
+    "middleName": "",
     "lastName": "Chakkalakkal Sankarankutty",
-    "addressLine1": "",
+    "addressLine1": "620 E 1700 S #1",
     "city": "Salt Lake City",
     "state": "Utah",
+    "country": "USA",
     "postalCode": "84105",
     "email": "csaparna88@gmail.com",
     "phone": "3853958015"
