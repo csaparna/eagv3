@@ -21,8 +21,7 @@ const uiController = {
         uiController.exitToBrowser();
     },
     exitToBrowser: () => {
-        document.getElementById('game-overlay').style.display = 'none';
-        document.getElementById('search-input').focus();
+        window.location.href = 'https://www.google.com';
     }
 };
 

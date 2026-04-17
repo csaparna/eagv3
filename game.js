@@ -19,6 +19,7 @@ const player = {
 };
 
 let platforms = [];
+let lava = [];
 let goal = { x: 750, y: 100, w: 40, h: 40 };
 let gameState = 'loading'; // loading, playing, won, lost
 
@@ -32,7 +33,8 @@ async function initGame() {
     uiController.showLoading(true);
     
     const levelData = await generateLevel();
-    platforms = levelData.platforms;
+    platforms = levelData.platforms || [];
+    lava = levelData.lava || [];
     goal = { ...levelData.goal, w: 40, h: 40 };
     player.color = levelData.theme.primary;
     player.x = 50;
@@ -54,7 +56,7 @@ function update() {
     else if (keys['ArrowLeft']) player.vx = -player.speed;
     else player.vx = 0;
 
-    if (keys['Space'] && player.grounded) {
+    if (keys['ArrowUp'] && player.grounded) {
         player.vy = player.jump;
         player.grounded = false;
     }
@@ -69,9 +71,18 @@ function update() {
     
     // Death check (fall off)
     if (player.y > canvas.height) {
-        player.y = 550;
-        player.vy = 0;
+        die();
     }
+
+    // Lava collision
+    lava.forEach(l => {
+        if (player.x < l.x + l.w &&
+            player.x + player.w > l.x &&
+            player.y < l.y + l.h &&
+            player.y + player.h > l.y) {
+            die();
+        }
+    });
 
     player.grounded = false;
 
@@ -83,11 +94,12 @@ function update() {
             player.y + player.h > p.y) {
             
             // Resolve from top
-            if (player.vy > 0 && player.y + player.h < p.y + p.h / 2) {
+            // Check if player was above the platform top in the previous frame
+            if (player.vy >= 0 && (player.y + player.h - player.vy) <= p.y + 15) {
                 player.y = p.y - player.h;
                 player.vy = 0;
                 player.grounded = true;
-            } else if (player.vy < 0 && player.y > p.y + p.h / 2) {
+            } else if (player.vy < 0) {
                 player.y = p.y + p.h;
                 player.vy = 0;
             }
@@ -114,6 +126,16 @@ function draw() {
         ctx.shadowBlur = 10;
         ctx.shadowColor = player.color;
     });
+    ctx.shadowBlur = 0;
+
+    // Draw Lava
+    ctx.fillStyle = '#ff4400';
+    lava.forEach(l => {
+        ctx.fillRect(l.x, l.y, l.w, l.h);
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#ff4400';
+    });
+    ctx.shadowBlur = 0;
 
     // Draw Goal
     ctx.fillStyle = '#ffcc00';
@@ -145,6 +167,15 @@ function win() {
 function giveUp() {
     gameState = 'lost';
     uiController.flashLoser();
+}
+
+function die() {
+    // Restart position
+    player.x = 50;
+    player.y = 550;
+    player.vx = 0;
+    player.vy = 0;
+    player.grounded = false;
 }
 
 initGame();
