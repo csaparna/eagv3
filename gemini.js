@@ -1,5 +1,5 @@
-const API_KEY = "AIzaSyDxj8hbOJdCIaq-heXc2k9T26-iUJh7bqQ";
-const MODEL = "gemini-3-flash-preview";
+// API_KEY is loaded from secrets.js
+const MODEL = "gemini-flash-latest";
 
 async function generateLevel() {
     console.log("Generating level with Gemini...");
@@ -34,7 +34,7 @@ async function generateLevel() {
     `;
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
     try {
         const response = await fetch(url, {
@@ -45,7 +45,8 @@ async function generateLevel() {
                 generationConfig: {
                     temperature: 1.5, // High temperature for maximum variety
                     topK: 40,
-                    topP: 0.95
+                    topP: 0.95,
+                    responseMimeType: "application/json"
                 }
             }),
             signal: controller.signal
