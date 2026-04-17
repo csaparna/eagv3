@@ -1,0 +1,15 @@
+- `[ ]` **Phase 1: Local Setup & Security**
+  - `[ ]` Initialize Node.js project.
+  - `[ ]` Install `playwright`, `pdf-parse`, `@google/generative-ai`, `dotenv`.
+  - `[ ]` Create `generate_secrets.sh` to inject `GEMINI_API_KEY`.
+- `[ ]` **Phase 2: Resume Parsing & Matching Engine**
+  - `[ ]` Create resume parsing utility for `../../data/resume.pdf` (or `../data/resume.pdf`).
+  - `[ ]` Implement Gemini matching function (JD vs Resume).
+- `[ ]` **Phase 3: Automated LinkedIn Scraper**
+  - `[ ]` Init Playwright persistent context for session cookies.
+  - `[ ]` Navigate to LinkedIn jobs search with URL filters (AI Context Engineer, Salt Lake City/Remote, Past 24 hours).
+  - `[ ]` Extract titles, links, JD texts.
+- `[ ]` **Phase 4: Job Evaluation & Auto-Apply Execution**
+  - `[ ]` Evaluate scraped JDs and get top 3 with score >= 70.
+  - `[ ]` Attempt Easy Apply / external link routing.
+  - `[ ]` Port structures from `workday-autofill-extension`.
