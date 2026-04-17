@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Tab Quest</title>
+    <link rel="stylesheet" href="newtab.css">
+</head>
+<body>
+    <!-- Background Dashboard (Revealed after game) -->
+    <div id="dashboard" class="dashboard">
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search the web..." autofocus>
+            <div class="shortcuts">
+                <div class="shortcut-item" title="Google">G</div>
+                <div class="shortcut-item" title="YouTube">Y</div>
+                <div class="shortcut-item" title="GitHub">H</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Overlay -->
+    <div id="game-overlay" class="overlay">
+        <div id="game-container">
+            <canvas id="gameCanvas"></canvas>
+            
+            <div id="ui-layer">
+                <div id="loading-screen" class="ui-panel">
+                    <div class="spinner"></div>
+                    <p>Generating a challenge for you...</p>
+                </div>
+
+                <div id="hud" class="hidden">
+                    <button id="give-up-btn" class="btn secondary">Give Up</button>
+                </div>
+
+                <div id="win-panel" class="ui-panel hidden">
+                    <h1>VICTORY!</h1>
+                    <p id="win-message">You mastered the maze.</p>
+                    <div class="button-group">
+                        <button id="close-btn" class="btn primary">Close</button>
+                        <button id="restart-btn" class="btn secondary">Another Game</button>
+                    </div>
+                </div>
+
+                <div id="loser-text" class="flash-text hidden">LOSER</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="gemini.js"></script>
+    <script src="game.js"></script>
+    <script src="ui.js"></script>
+</body>
+</html>

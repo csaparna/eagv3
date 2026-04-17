@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Gemini Jump: New Tab Quest",
+  "version": "1.0",
+  "description": "A Gemini-powered platformer challenge every time you open a new tab.",
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "icons": {
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}
