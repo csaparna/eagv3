@@ -50,3 +50,5 @@ Open a new tab in Chrome, and the challenge will begin!
 ---
 
 *Built with ❤️ using Antigravity AI.*
+
+The video of the demo is available at https://youtu.be/_ua7TO4tbUc
