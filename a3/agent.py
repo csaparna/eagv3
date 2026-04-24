@@ -341,17 +341,33 @@ def run_agent(user_query: str, max_iterations: int = 10, verbose: bool = True):
 
 
 # ============================================================
-# Run the agent!
+# Run the agent intelligently!
 # ============================================================
 
 if __name__ == "__main__":
     print("\n" + "=" * 60)
     print("  RESEARCH AGENT")
-    print("  Let's see the agent loop in action!")
+    print("  Hello! Let's find, download, and log academic papers.")
     print("=" * 60)
 
-    # Test 1: Academic paper retrieval
-    print("\n\n>>> TEST 1: Paper processing agent")
-    run_agent(
-        "Save the paper on Crispr Cas9 by Doudna, download it, and document it."
-    )
+    while True:
+        paper_details = input("\nEnter the paper details you want to find (or type 'exit'/'quit' to stop): ")
+        if paper_details.strip().lower() in ['exit', 'quit']:
+            print("Goodbye!")
+            break
+            
+        if not paper_details.strip():
+            continue
+            
+        print("\n>>> Searching & Processing...")
+        run_agent(paper_details)
+        
+        while True:
+            another = input("\nDo you want to search for another paper? (y/n): ").strip().lower()
+            if another in ['y', 'yes', 'n', 'no']:
+                break
+            print("Please enter 'y' or 'n'.")
+            
+        if another in ['n', 'no']:
+            print("Goodbye!")
+            break
