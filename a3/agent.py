@@ -14,9 +14,9 @@ from dotenv import load_dotenv
 # Configuration
 # ============================================================
 load_dotenv()
-
+ 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite-preview")
 THROTTLE_SECONDS = 6  # Wait before each LLM call to stay under free-tier RPM limits
 
 if not GEMINI_API_KEY:
@@ -74,7 +74,7 @@ IMPORTANT RULES:
 - Use tools when you need to interact with external services.
 - After receiving a tool result, either use another tool or provide your final answer.
 - You can chain these tools to find, download, and log academic papers.
-- Only find the paper asked. After successfully finding one paper, do not try to find another paper.
+- Only call the tools necessary to answer the question. After successful response to the question, do not make other tool calls.
 """
 
 
