@@ -1,7 +1,12 @@
 """
 MCP Server for academic paper research tools.
 Uses FastMCP to expose search_semantic_scholar and log_paper_record as MCP tools.
-Use 'fastmcp dev inspector mcp_server.py' to run the server and test the tools.
+
+Run the server in development mode with inspector:
+  $ fastmcp dev inspector mcp_server.py
+
+Run the server as an app:
+  $ fastmcp dev apps mcp_server.py
 """
 import time
 import json
@@ -9,6 +14,13 @@ import csv
 import os
 import requests
 from fastmcp import FastMCP
+from prefab_ui.app import PrefabApp
+from prefab_ui.components.column import Column
+from prefab_ui.components.row import Row
+from prefab_ui.components.data_table import DataTable, DataTableColumn
+from prefab_ui.components.typography import H1, H2, Muted
+from prefab_ui.components.metric import Metric
+from prefab_ui.components.alert import Alert
 
 mcp = FastMCP("Research Agent")
 
@@ -71,6 +83,54 @@ def log_paper_record(title: str, authors: str, doi: str, tldr: str, citation_cou
         return json.dumps({"status": "Success", "csv_file": csv_path})
     except Exception as e:
         return json.dumps({"error": str(e)})
+
+
+@mcp.tool(app=True)
+def view_paper_log(csv_path: str = "papers.csv") -> PrefabApp:
+    """Read the paper log CSV and render it as an interactive table."""
+    rows = []
+    error_msg = None
+
+    try:
+        if not os.path.isfile(csv_path):
+            error_msg = f"No log file found at {csv_path}."
+        else:
+            with open(csv_path, mode='r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                rows = [
+                    {k: v for k, v in row.items() if k is not None}
+                    for row in reader
+                ]
+    except Exception as e:
+        error_msg = str(e)
+
+    with Column(gap=4) as view:
+        H1("📚 Paper Log")
+
+        if error_msg:
+            Alert(title="Error", description=error_msg)
+        elif not rows:
+            Muted("No papers logged yet.")
+        else:
+            with Row(gap=4):
+                Metric(label="Total Papers", value=str(len(rows)))
+
+            DataTable(
+                columns=[
+                    DataTableColumn(key="Title", header="Title", sortable=True, min_width="200px"),
+                    DataTableColumn(key="Authors", header="Authors", min_width="150px"),
+                    DataTableColumn(key="Year", header="Year", sortable=True, width="80px", align="center"),
+                    DataTableColumn(key="Citation Count", header="Citations", sortable=True, width="100px", align="right"),
+                    DataTableColumn(key="DOI", header="DOI", min_width="120px"),
+                    DataTableColumn(key="TLDR", header="TLDR", min_width="250px"),
+                ],
+                rows=rows,
+                search=True,
+                paginated=True,
+                page_size=10,
+            )
+
+    return PrefabApp(view=view)
 
 
 if __name__ == "__main__":
