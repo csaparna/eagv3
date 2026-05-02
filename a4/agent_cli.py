@@ -1,5 +1,5 @@
 """
-CLI Agent that uses the tools defined in agent.py (MCP server).
+CLI Agent that uses the tools defined in mcp_server.py (MCP server).
 This file contains the LLM configuration, system prompt, response parser,
 agent loop, and interactive CLI.
 
@@ -12,7 +12,7 @@ import re
 import os
 import time
 from dotenv import load_dotenv
-from agent import search_semantic_scholar, log_paper_record
+from mcp_server import search_semantic_scholar, log_paper_record
 
 # ============================================================
 # Configuration
