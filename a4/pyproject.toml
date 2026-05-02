@@ -1,0 +1,12 @@
+[project]
+name = "a4"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp>=3.2.4",
+    "google-genai>=1.74.0",
+    "prefab-ui>=0.19.1",
+    "requests>=2.33.1",
+]
