@@ -1,6 +1,7 @@
 """
 MCP Server for academic paper research tools.
 Uses FastMCP to expose search_semantic_scholar and log_paper_record as MCP tools.
+Use 'fastmcp dev inspector mcp_server.py' to run the server and test the tools.
 """
 import time
 import json
