@@ -48,16 +48,24 @@ mcp = FastMCP("Research Agent")
 # MCP Tools — called by the agent loop behind the scenes
 # ============================================================
 
+SEMANTIC_SCHOLAR_API_KEY = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
+
+
 @mcp.tool()
-def search_semantic_scholar(query: str, offset: int = 0, limit: int = 1) -> str:
+def search_semantic_scholar(query: str, offset: int = 0, limit: int = 1, year: int =2026) -> str:
     """Search Semantic Scholar for papers and return details including title, authors, tldr, citationCount, doi, and year."""
     query = '+'.join(query.split())
-    url = f"https://api.semanticscholar.org/graph/v1/paper/search?query={query}&offset={offset}&limit={limit}&fields=externalIds,authors,title,tldr,citationCount,year"
+    url = f"https://api.semanticscholar.org/graph/v1/paper/search?query={query}&offset={offset}&limit={limit}&year={year}&fields=externalIds,authors,title,tldr,citationCount,year"
+
+    # Use proper headers — x-api-key gives a dedicated rate limit (vs shared global pool)
+    headers = {'User-Agent': 'ResearchAgent/1.0 (academic-tool)'}
+    if SEMANTIC_SCHOLAR_API_KEY:
+        headers['x-api-key'] = SEMANTIC_SCHOLAR_API_KEY
 
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            response = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}, timeout=10)
+            response = requests.get(url, headers=headers, timeout=10)
             if response.status_code == 429:
                 wait = 2 ** (attempt + 1)
                 time.sleep(wait)
@@ -143,6 +151,7 @@ IMPORTANT RULES:
 - After receiving a tool result, either use another tool or provide your final answer.
 - You can chain these tools to find, download, and log academic papers.
 - Only call the tools necessary to answer the question. After successful response to the question, do not make other tool calls.
+- If a tool result contains an error about rate limiting (429), do NOT retry the same tool. Instead, immediately return a final answer explaining that Semantic Scholar rate-limited the request and the user should try again later.
 """
 
 
@@ -184,12 +193,14 @@ def _parse_llm_response(text: str) -> dict:
     raise ValueError(f"Could not parse LLM response: {text[:200]}")
 
 
-def _run_agent(user_query: str, max_iterations: int = 10) -> str:
+def _run_agent(user_query: str, max_iterations: int = 4) -> str:
     """Run the agent loop and return the final answer."""
     messages = [
         {"role": "system", "content": _system_prompt},
         {"role": "user", "content": user_query},
     ]
+    consecutive_errors = 0
+    MAX_CONSECUTIVE_ERRORS = 2  # Bail after 2 consecutive tool errors
 
     for _ in range(max_iterations):
         prompt = ""
@@ -223,11 +234,26 @@ def _run_agent(user_query: str, max_iterations: int = 10) -> str:
                 error_msg = json.dumps({"error": f"Unknown tool: {tool_name}. Available: {list(_tools.keys())}"})
                 messages.append({"role": "assistant", "content": response_text})
                 messages.append({"role": "tool", "content": error_msg})
-                continue
+                consecutive_errors += 1
+            else:
+                tool_result = _tools[tool_name](**tool_args)
+                messages.append({"role": "assistant", "content": response_text})
+                messages.append({"role": "tool", "content": tool_result})
 
-            tool_result = _tools[tool_name](**tool_args)
-            messages.append({"role": "assistant", "content": response_text})
-            messages.append({"role": "tool", "content": tool_result})
+                # Check if the tool returned an error (rate limit, etc.)
+                try:
+                    result_data = json.loads(tool_result)
+                    if "error" in result_data:
+                        consecutive_errors += 1
+                    else:
+                        consecutive_errors = 0
+                except (json.JSONDecodeError, TypeError):
+                    consecutive_errors = 0
+
+            # Bail early if tools keep failing (e.g. rate-limited)
+            if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
+                return ("Semantic Scholar is rate-limiting requests. "
+                        "Showing existing paper log below. Please try again later.")
 
     return "Max iterations reached. Agent could not complete the task."
 
