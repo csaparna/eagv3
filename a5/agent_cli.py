@@ -95,10 +95,38 @@ DO NOT return a final answer until you have called generate_pg_schema AND plan_d
 You must respond in ONE of these two JSON formats:
 
 If you need to use a tool:
-{{"tool_name": "<name>", "tool_arguments": {{"<arg_name>": "<value>"}}}}
+{{
+  "reasoning_type": "<lookup | validation | transformation | planning>",
+  "self_verification": {{
+    "checkpoint": "<description of checkpoint checked>",
+    "status": "<passed | failed | pending>",
+    "verification_details": "<what was verified, any notes, discrepancies, or confidence markers>"
+  }},
+  "tool_name": "<name>",
+  "tool_arguments": {{"<arg_name>": "<value>"}}
+}}
 
 If you have the final answer (ONLY after completing all 5 tool calls):
-{{"answer": "<your comprehensive final answer>"}}
+{{
+  "reasoning_type": "planning",
+  "self_verification": {{
+    "checkpoint": "<description of checkpoint checked>",
+    "status": "<passed | failed>",
+    "verification_details": "<what was verified, any notes, discrepancies, or confidence markers>"
+  }},
+  "answer": "<your comprehensive final answer>"
+}}
+
+REASONING AND SELF-VERIFICATION INSTRUCTIONS:
+- You must explicitly define your current "reasoning_type":
+  - "lookup": When fetching, extracting, or reading documentation content.
+  - "validation": When checking endpoint availability, status codes, response data structures, or validating inputs.
+  - "transformation": When modeling structures, generating PostgreSQL CREATE TABLE DDL, schemas, datatypes, or indexes.
+  - "planning": When designing the final pipeline flow, querying strategies, final SQL transformation scripts, or verifying plan consistency.
+- You must perform a "self_verification" check at each step:
+  - "checkpoint": State clearly what logic/data you are validating (e.g., "Verifying relevant endpoint paths match target question requirements", "Checking that DDL matches standard PostgreSQL syntax", "Validating that pipeline plan queries all relevant tables correctly").
+  - "status": Output "passed" if the validation succeeded, "failed" if there are gaps/errors, or "pending" if it requires subsequent steps.
+  - "verification_details": Explain what you analyzed, what gaps (if any) you found, and why you marked it with that status.
 
 IMPORTANT RULES:
 - Respond with ONLY the JSON. No other text. No markdown code fences.
@@ -195,7 +223,7 @@ def run_agent(api_doc_url: str, question: str, max_iterations: int = 10, verbose
 
         response_text = call_llm(prompt)
         if verbose:
-            print(f"LLM: {response_text.strip()[:200]}...")
+            print(f"LLM RAW RESPONSE:\n{response_text.strip()}\n")
 
         try:
             parsed = parse_llm_response(response_text)

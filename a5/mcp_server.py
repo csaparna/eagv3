@@ -5,20 +5,24 @@ and generating PostgreSQL schemas. The app tool (api_discovery) provides a
 Prefab UI with two input fields: API doc URL and a question.
 
 Run the server in development mode with inspector:
-  $ fastmcp dev inspector mcp_server.py
+  $ uv run fastmcp dev inspector mcp_server.py
 
 Run the server as an app:
-  $ fastmcp dev apps mcp_server.py
+  $ uv run fastmcp dev apps mcp_server.py
 """
 import time
 import json
 import re
 import os
 import requests
+import hashlib
+import threading
 from bs4 import BeautifulSoup
 from google import genai
 from dotenv import load_dotenv
-from fastmcp import FastMCP
+from fastmcp import FastMCP, Context
+import asyncio
+from typing import Callable
 from prefab_ui.app import PrefabApp
 from prefab_ui.components.column import Column
 from prefab_ui.components.row import Row
@@ -29,6 +33,11 @@ from prefab_ui.components.alert import Alert, AlertTitle, AlertDescription
 from prefab_ui.components.card import Card, CardHeader, CardContent, CardTitle
 from prefab_ui.components.separator import Separator
 from prefab_ui.components.badge import Badge
+from prefab_ui.components.button import Button
+from prefab_ui.components.loader import Loader
+from prefab_ui.components.progress import Progress
+from prefab_ui.actions import SetInterval
+from prefab_ui.actions.mcp import CallTool
 
 from models import (
     DiscoveryRequest,
@@ -56,6 +65,20 @@ if not GEMINI_API_KEY:
 llm_client = genai.Client(api_key=GEMINI_API_KEY)
 
 mcp = FastMCP("API Discovery Agent")
+
+# ============================================================
+# Background Jobs Tracking (Threading & Polling)
+# ============================================================
+_background_jobs = {}
+_jobs_lock = threading.Lock()
+
+def get_job_key(api_doc_url: str, question: str) -> str:
+    """Generate a unique deterministic hash key for a given URL and question."""
+    h = hashlib.sha256()
+    h.update(api_doc_url.encode("utf-8", errors="ignore"))
+    h.update(b"|||")
+    h.update(question.encode("utf-8", errors="ignore"))
+    return h.hexdigest()
 
 
 # ============================================================
@@ -107,10 +130,38 @@ DO NOT return a final answer until you have called generate_pg_schema AND plan_d
 You must respond in ONE of these two JSON formats:
 
 If you need to use a tool:
-{{"tool_name": "<name>", "tool_arguments": {{"<arg_name>": "<value>"}}}}
+{{
+  "reasoning_type": "<lookup | validation | transformation | planning>",
+  "self_verification": {{
+    "checkpoint": "<description of checkpoint checked>",
+    "status": "<passed | failed | pending>",
+    "verification_details": "<what was verified, any notes, discrepancies, or confidence markers>"
+  }},
+  "tool_name": "<name>",
+  "tool_arguments": {{"<arg_name>": "<value>"}}
+}}
 
 If you have the final answer (ONLY after completing all 5 tool calls):
-{{"answer": "<your comprehensive final answer>"}}
+{{
+  "reasoning_type": "planning",
+  "self_verification": {{
+    "checkpoint": "<description of checkpoint checked>",
+    "status": "<passed | failed>",
+    "verification_details": "<what was verified, any notes, discrepancies, or confidence markers>"
+  }},
+  "answer": "<your comprehensive final answer>"
+}}
+
+REASONING AND SELF-VERIFICATION INSTRUCTIONS:
+- You must explicitly define your current "reasoning_type":
+  - "lookup": When fetching, extracting, or reading documentation content.
+  - "validation": When checking endpoint availability, status codes, response data structures, or validating inputs.
+  - "transformation": When modeling structures, generating PostgreSQL CREATE TABLE DDL, schemas, datatypes, or indexes.
+  - "planning": When designing the final pipeline flow, querying strategies, final SQL transformation scripts, or verifying plan consistency.
+- You must perform a "self_verification" check at each step:
+  - "checkpoint": State clearly what logic/data you are validating (e.g., "Verifying relevant endpoint paths match target question requirements", "Checking that DDL matches standard PostgreSQL syntax", "Validating that pipeline plan queries all relevant tables correctly").
+  - "status": Output "passed" if the validation succeeded, "failed" if there are gaps/errors, or "pending" if it requires subsequent steps.
+  - "verification_details": Explain what you analyzed, what gaps (if any) you found, and why you marked it with that status.
 
 IMPORTANT RULES:
 - Respond with ONLY the JSON. No other text. No markdown code fences.
@@ -456,10 +507,38 @@ DO NOT return a final answer until you have called generate_pg_schema AND plan_d
 You must respond in ONE of these two JSON formats:
 
 If you need to use a tool:
-{{"tool_name": "<name>", "tool_arguments": {{"<arg_name>": "<value>"}}}}
+{{
+  "reasoning_type": "<lookup | validation | transformation | planning>",
+  "self_verification": {{
+    "checkpoint": "<description of checkpoint checked>",
+    "status": "<passed | failed | pending>",
+    "verification_details": "<what was verified, any notes, discrepancies, or confidence markers>"
+  }},
+  "tool_name": "<name>",
+  "tool_arguments": {{"<arg_name>": "<value>"}}
+}}
 
 If you have the final answer (ONLY after completing all 5 tool calls):
-{{"answer": "<your comprehensive final answer>"}}
+{{
+  "reasoning_type": "planning",
+  "self_verification": {{
+    "checkpoint": "<description of checkpoint checked>",
+    "status": "<passed | failed>",
+    "verification_details": "<what was verified, any notes, discrepancies, or confidence markers>"
+  }},
+  "answer": "<your comprehensive final answer>"
+}}
+
+REASONING AND SELF-VERIFICATION INSTRUCTIONS:
+- You must explicitly define your current "reasoning_type":
+  - "lookup": When fetching, extracting, or reading documentation content.
+  - "validation": When checking endpoint availability, status codes, response data structures, or validating inputs.
+  - "transformation": When modeling structures, generating PostgreSQL CREATE TABLE DDL, schemas, datatypes, or indexes.
+  - "planning": When designing the final pipeline flow, querying strategies, final SQL transformation scripts, or verifying plan consistency.
+- You must perform a "self_verification" check at each step:
+  - "checkpoint": State clearly what logic/data you are validating (e.g., "Verifying relevant endpoint paths match target question requirements", "Checking that DDL matches standard PostgreSQL syntax", "Validating that pipeline plan queries all relevant tables correctly").
+  - "status": Output "passed" if the validation succeeded, "failed" if there are gaps/errors, or "pending" if it requires subsequent steps.
+  - "verification_details": Explain what you analyzed, what gaps (if any) you found, and why you marked it with that status.
 
 IMPORTANT RULES:
 - Respond with ONLY the JSON. No other text. No markdown code fences.
@@ -530,7 +609,7 @@ def _parse_llm_response(text: str) -> dict:
     return _extract_json(text)
 
 
-def _run_agent(api_doc_url: str, question: str, max_iterations: int = 6) -> dict:
+def _run_agent(api_doc_url: str, question: str, max_iterations: int = 6, on_progress: Callable[[int, str], None] | None = None) -> dict:
     """Run the agent loop and return structured results.
 
     Returns a dict with keys:
@@ -577,11 +656,32 @@ def _run_agent(api_doc_url: str, question: str, max_iterations: int = 6) -> dict
             continue
 
         if "answer" in parsed:
+            if on_progress:
+                on_progress(6, "Generating final answer")
             return {"answer": parsed["answer"], "tool_results": tool_results}
 
         if "tool_name" in parsed:
             tool_name = parsed["tool_name"]
             tool_args = parsed.get("tool_arguments", {})
+
+            if on_progress:
+                tool_display_names = {
+                    "fetch_api_docs": "Fetching API documentation",
+                    "discover_endpoints": "Analyzing and discovering API endpoints",
+                    "check_endpoint_availability": "Verifying endpoint availability",
+                    "generate_pg_schema": "Generating PostgreSQL database schema",
+                    "plan_data_pipeline": "Designing data pipeline & final SQL query"
+                }
+                display_name = tool_display_names.get(tool_name, tool_name)
+                step_map = {
+                    "fetch_api_docs": 1,
+                    "discover_endpoints": 2,
+                    "check_endpoint_availability": 3,
+                    "generate_pg_schema": 4,
+                    "plan_data_pipeline": 5
+                }
+                step = step_map.get(tool_name, 1)
+                on_progress(step, display_name)
 
             if tool_name not in _tools:
                 error_msg = json.dumps({"error": f"Unknown tool: {tool_name}. Available: {list(_tools.keys())}"})
@@ -617,28 +717,142 @@ def _run_agent(api_doc_url: str, question: str, max_iterations: int = 6) -> dict
     }
 
 
-# ============================================================
-# App Tool — Prefab UI with two input fields + rendered results
-# ============================================================
+@mcp.tool()
+def api_discovery_reset(api_doc_url: str, question: str) -> str:
+    """Reset the background job status to allow re-running discovery."""
+    job_key = get_job_key(api_doc_url, question)
+    with _jobs_lock:
+        if job_key in _background_jobs:
+            del _background_jobs[job_key]
+    return json.dumps({"status": "reset"})
+
 
 @mcp.tool(app=True)
-def api_discovery(api_doc_url: str, question: str) -> PrefabApp:
+async def api_discovery(api_doc_url: str, question: str, ctx: Context = None) -> PrefabApp:
     """Analyze an API's documentation to discover endpoints relevant to your question.
     Produces a PostgreSQL schema and data pipeline plan."""
+    
+    api_doc_url = api_doc_url.strip()
+    question = question.strip()
+    
+    job_key = get_job_key(api_doc_url, question)
+    
+    with _jobs_lock:
+        if job_key not in _background_jobs:
+            _background_jobs[job_key] = {
+                "status": "running",
+                "step": 1,
+                "message": "Initializing discovery...",
+                "start_time": time.time(),
+            }
+            
+            def thread_target():
+                try:
+                    def on_progress(step: int, msg: str):
+                        with _jobs_lock:
+                            if job_key in _background_jobs:
+                                _background_jobs[job_key]["step"] = step
+                                _background_jobs[job_key]["message"] = msg
+                    
+                    result = _run_agent(api_doc_url, question, on_progress=on_progress)
+                    
+                    with _jobs_lock:
+                        if job_key in _background_jobs:
+                            _background_jobs[job_key]["status"] = "complete"
+                            _background_jobs[job_key]["result"] = result
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc()
+                    with _jobs_lock:
+                        if job_key in _background_jobs:
+                            _background_jobs[job_key]["status"] = "error"
+                            _background_jobs[job_key]["error"] = str(e)
+            
+            t = threading.Thread(target=thread_target, daemon=True)
+            t.start()
 
-    # Run the agent loop
-    agent_result = None
+    job = _background_jobs[job_key]
+    status = job["status"]
+
+    if status == "running":
+        step = job.get("step", 1)
+        msg = job.get("message", "Processing...")
+        elapsed = int(time.time() - job.get("start_time", time.time()))
+        pct = int((step / 6) * 100)
+        
+        poll_action = SetInterval(
+            2000,
+            count=1,
+            on_complete=CallTool(
+                "api_discovery",
+                arguments={"api_doc_url": api_doc_url, "question": question}
+            )
+        )
+        
+        with Column(gap=6, on_mount=poll_action, css_class="max-w-2xl mx-auto py-12 px-4 align-center justify-center") as view:
+            H1("🔍 Discovering API Endpoints...")
+            
+            with Card(css_class="w-full shadow-lg border-primary/20 bg-background/50 backdrop-blur-md"):
+                with CardContent(css_class="p-8 text-center space-y-6"):
+                    Loader(variant="bars", size="lg")
+                    
+                    with Column(gap=2, align="center"):
+                        H3(f"Step {step} of 6")
+                        P(msg, css_class="text-lg font-medium text-foreground/80")
+                        Muted(f"Elapsed: {elapsed}s • (Gemini Rate Limits Active)")
+                    
+                    Progress(value=pct, variant="default", size="lg")
+            
+            with Card(css_class="w-full bg-muted/30 border-dashed border-2"):
+                with CardContent(css_class="p-4 space-y-2"):
+                    Muted("Current Task Details")
+                    P(f"🔗 API URL: {api_doc_url}", css_class="text-sm font-mono truncate")
+                    P(f"❓ Question: {question}", css_class="text-sm text-foreground/75")
+                    
+        return PrefabApp(view=view)
+
+    elif status == "error":
+        err_msg = job.get("error", "An unknown error occurred.")
+        with Column(gap=6, css_class="max-w-2xl mx-auto py-12 px-4 align-center justify-center") as view:
+            H1("❌ Discovery Failed")
+            
+            with Alert(variant="destructive"):
+                AlertTitle("Discovery Error")
+                AlertDescription(err_msg)
+                
+            with Card(css_class="w-full bg-muted/30"):
+                with CardContent(css_class="p-6 text-center space-y-4"):
+                    P("The discovery agent encountered a fatal issue while analyzing the API.")
+                    Button(
+                        "Try Again",
+                        variant="default",
+                        on_click=[
+                            CallTool("api_discovery_reset", arguments={"api_doc_url": api_doc_url, "question": question}),
+                            CallTool("api_discovery", arguments={"api_doc_url": api_doc_url, "question": question})
+                        ]
+                    )
+        return PrefabApp(view=view)
+
+    # If complete, render the results
+    agent_result = job.get("result", {})
     agent_error = None
-    try:
-        agent_result = _run_agent(api_doc_url, question)
-    except Exception as e:
-        agent_error = f"Agent encountered an error: {e}"
 
     # Build the UI
     with Column(gap=4) as view:
-        H1("🔍 API Endpoint Discovery Agent")
-        P(f"Analyzing: {api_doc_url}")
-        P(f"Question: {question}")
+        with Row(gap=4, justify="between", align="center"):
+            with Column(gap=1):
+                H1("🔍 API Endpoint Discovery Agent")
+                P(f"Analyzing: {api_doc_url}")
+                P(f"Question: {question}")
+            Button(
+                "Reset & Re-Run",
+                variant="outline",
+                size="sm",
+                on_click=[
+                    CallTool("api_discovery_reset", arguments={"api_doc_url": api_doc_url, "question": question}),
+                    CallTool("api_discovery", arguments={"api_doc_url": api_doc_url, "question": question})
+                ]
+            )
         Separator()
 
         if agent_error:
