@@ -45,6 +45,25 @@ class EndpointInfo(BaseModel):
     relevance_reason: str = ""
 
 
+class EndpointsDiscovery(BaseModel):
+    """Output of the discover_endpoints tool."""
+    base_url: str = ""
+    total_endpoints: int = 0
+    endpoints: list[EndpointInfo] = []
+    limitations: list[str] = []
+
+
+class EndpointAvailability(BaseModel):
+    """Output of the check_endpoint_availability tool."""
+    url: str
+    status_code: int | None = None
+    is_available: bool = False
+    has_data: bool = False
+    sample_response_keys: list[str] = []
+    content_type: str = "unknown"
+    error: str | None = None
+
+
 class PostgresColumn(BaseModel):
     """A column in the recommended PostgreSQL table."""
     name: str
@@ -60,6 +79,7 @@ class PostgresTableSpec(BaseModel):
     primary_key: str = "id"
     indexes: list[str] = []
     create_table_ddl: str = ""
+    notes: str = ""
 
 
 class TransformationStep(BaseModel):
@@ -67,6 +87,17 @@ class TransformationStep(BaseModel):
     step_number: int
     description: str
     sql_or_code: str = ""
+
+
+class PipelinePlan(BaseModel):
+    """Output of the plan_data_pipeline tool."""
+    query_strategy: str = ""
+    pagination_approach: str = ""
+    transformations: list[TransformationStep] = []
+    insert_strategy: str = ""
+    final_sql: str = ""
+    estimated_complexity: str = "medium"
+    notes: str = ""
 
 
 class DiscoveryResult(BaseModel):
@@ -78,3 +109,4 @@ class DiscoveryResult(BaseModel):
     transformations: list[TransformationStep] = []
     query_strategy: str = ""
     final_sql: str = ""
+

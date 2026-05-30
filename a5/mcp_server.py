@@ -30,7 +30,15 @@ from prefab_ui.components.card import Card, CardHeader, CardContent, CardTitle
 from prefab_ui.components.separator import Separator
 from prefab_ui.components.badge import Badge
 
-from models import DiscoveryRequest
+from models import (
+    DiscoveryRequest,
+    EndpointInfo,
+    EndpointsDiscovery,
+    EndpointAvailability,
+    PostgresTableSpec,
+    PipelinePlan,
+    DiscoveryResult,
+)
 
 # ============================================================
 # Configuration
@@ -243,9 +251,14 @@ IMPORTANT:
 - Respond with ONLY the JSON, no other text"""
 
         response_text = _call_llm(prompt, fast=True)
-        # Validate it's parseable JSON
         parsed = _extract_json(response_text)
-        return json.dumps(parsed)
+        # Validate through Pydantic model
+        try:
+            discovery = EndpointsDiscovery.model_validate(parsed)
+            return discovery.model_dump_json()
+        except Exception:
+            # Fallback to raw JSON if model validation fails
+            return json.dumps(parsed)
 
     except Exception as e:
         return json.dumps({"error": f"Failed to analyze endpoints: {str(e)}"})
@@ -281,23 +294,23 @@ def check_endpoint_availability(base_url: str, endpoint_path: str, method: str =
             except (json.JSONDecodeError, ValueError):
                 pass
 
-        return json.dumps({
-            "url": url,
-            "status_code": response.status_code,
-            "is_available": is_available,
-            "has_data": has_data,
-            "sample_response_keys": sample_keys,
-            "content_type": response.headers.get("Content-Type", "unknown"),
-        })
+        result = EndpointAvailability(
+            url=url,
+            status_code=response.status_code,
+            is_available=is_available,
+            has_data=has_data,
+            sample_response_keys=sample_keys,
+            content_type=response.headers.get("Content-Type", "unknown"),
+        )
+        return result.model_dump_json()
 
     except requests.RequestException as e:
-        return json.dumps({
-            "url": base_url.rstrip("/") + "/" + endpoint_path.lstrip("/"),
-            "status_code": None,
-            "is_available": False,
-            "has_data": False,
-            "error": str(e),
-        })
+        result = EndpointAvailability(
+            url=base_url.rstrip("/") + "/" + endpoint_path.lstrip("/"),
+            is_available=False,
+            error=str(e),
+        )
+        return result.model_dump_json()
 
 
 @mcp.tool()
@@ -643,33 +656,31 @@ def api_discovery(api_doc_url: str, question: str) -> PrefabApp:
             # ── Endpoints Section ──
             if "discover_endpoints" in tool_results:
                 try:
-                    endpoints_data = json.loads(tool_results["discover_endpoints"])
-                    total = endpoints_data.get("total_endpoints", 0)
-                    endpoints = endpoints_data.get("endpoints", [])
-                    relevant = [e for e in endpoints if e.get("is_relevant")]
-                    limitations = endpoints_data.get("limitations", [])
+                    raw = json.loads(tool_results["discover_endpoints"])
+                    discovery = EndpointsDiscovery.model_validate(raw)
+                    relevant = [ep for ep in discovery.endpoints if ep.is_relevant]
 
                     Separator()
                     H2("📊 Endpoint Discovery Results")
 
                     with Row(gap=4):
-                        Metric(label="Total Endpoints Found", value=str(total))
+                        Metric(label="Total Endpoints Found", value=str(discovery.total_endpoints))
                         Metric(label="Relevant Endpoints", value=str(len(relevant)))
-                        Metric(label="Limitations", value=str(len(limitations)))
+                        Metric(label="Limitations", value=str(len(discovery.limitations)))
 
                     if relevant:
                         H3("Relevant Endpoints")
                         endpoint_rows = []
                         for ep in relevant:
-                            params = ", ".join([p.get("name", "") for p in ep.get("query_params", [])])
-                            fields = ", ".join([f.get("name", "") for f in ep.get("response_fields", [])])
+                            params = ", ".join([p.name for p in ep.query_params])
+                            fields = ", ".join([f.name for f in ep.response_fields])
                             endpoint_rows.append({
-                                "Method": ep.get("method", "GET"),
-                                "Path": ep.get("path", ""),
-                                "Description": ep.get("description", ""),
+                                "Method": ep.method,
+                                "Path": ep.path,
+                                "Description": ep.description,
                                 "Query Params": params or "None",
                                 "Response Fields": fields or "N/A",
-                                "Relevance": ep.get("relevance_reason", ""),
+                                "Relevance": ep.relevance_reason,
                             })
 
                         DataTable(
@@ -687,57 +698,59 @@ def api_discovery(api_doc_url: str, question: str) -> PrefabApp:
                             page_size=10,
                         )
 
-                    if limitations:
+                    if discovery.limitations:
                         H3("⚠️ Limitations")
-                        for lim in limitations:
+                        for lim in discovery.limitations:
                             with Alert(variant="warning"):
-                                AlertDescription(str(lim))
+                                AlertDescription(lim)
 
-                except (json.JSONDecodeError, TypeError):
+                except (json.JSONDecodeError, TypeError, Exception):
                     pass
 
             # ── Endpoint Availability Section ──
             if "check_endpoint_availability" in tool_results:
                 try:
-                    avail_data = json.loads(tool_results["check_endpoint_availability"])
+                    raw = json.loads(tool_results["check_endpoint_availability"])
+                    avail = EndpointAvailability.model_validate(raw)
                     Separator()
                     H2("🟢 Endpoint Availability Check")
                     with Card():
                         with CardHeader():
-                            CardTitle(avail_data.get("url", "Unknown URL"))
+                            CardTitle(avail.url)
                         with CardContent():
-                            status = "✅ Available" if avail_data.get("is_available") else "❌ Unavailable"
-                            has_data = "✅ Yes" if avail_data.get("has_data") else "❌ No"
-                            P(f"Status: {status} (HTTP {avail_data.get('status_code', 'N/A')})")
+                            status = "✅ Available" if avail.is_available else "❌ Unavailable"
+                            has_data = "✅ Yes" if avail.has_data else "❌ No"
+                            P(f"Status: {status} (HTTP {avail.status_code or 'N/A'})")
                             P(f"Has Data: {has_data}")
-                            if avail_data.get("sample_response_keys"):
-                                P(f"Sample Response Keys: {', '.join(avail_data['sample_response_keys'])}")
-                except (json.JSONDecodeError, TypeError):
+                            if avail.sample_response_keys:
+                                P(f"Sample Response Keys: {', '.join(avail.sample_response_keys)}")
+                except (json.JSONDecodeError, TypeError, Exception):
                     pass
 
             # ── PostgreSQL Schema Section ──
             if "generate_pg_schema" in tool_results:
                 try:
-                    schema_data = json.loads(tool_results["generate_pg_schema"])
+                    raw = json.loads(tool_results["generate_pg_schema"])
+                    schema = PostgresTableSpec.model_validate(raw)
                     Separator()
                     H2("🗄️ PostgreSQL Table Schema")
 
-                    if schema_data.get("create_table_ddl"):
+                    if schema.create_table_ddl:
                         with Card():
                             with CardHeader():
-                                CardTitle(f"Table: {schema_data.get('table_name', 'unknown')}")
+                                CardTitle(f"Table: {schema.table_name}")
                             with CardContent():
-                                P(schema_data["create_table_ddl"])
+                                P(schema.create_table_ddl)
 
-                    if schema_data.get("columns"):
+                    if schema.columns:
                         H3("Column Details")
                         col_rows = []
-                        for col in schema_data["columns"]:
+                        for col in schema.columns:
                             col_rows.append({
-                                "Column": col.get("name", ""),
-                                "Type": col.get("pg_type", ""),
-                                "Nullable": "Yes" if col.get("nullable", True) else "No",
-                                "Description": col.get("description", ""),
+                                "Column": col.name,
+                                "Type": col.pg_type,
+                                "Nullable": "Yes" if col.nullable else "No",
+                                "Description": col.description,
                             })
                         DataTable(
                             columns=[
@@ -749,43 +762,44 @@ def api_discovery(api_doc_url: str, question: str) -> PrefabApp:
                             rows=col_rows,
                         )
 
-                    if schema_data.get("indexes"):
+                    if schema.indexes:
                         H3("Indexes")
-                        for idx in schema_data["indexes"]:
-                            P(str(idx))
+                        for idx in schema.indexes:
+                            P(idx)
 
-                except (json.JSONDecodeError, TypeError):
+                except (json.JSONDecodeError, TypeError, Exception):
                     pass
 
             # ── Data Pipeline Plan Section ──
             if "plan_data_pipeline" in tool_results:
                 try:
-                    pipeline_data = json.loads(tool_results["plan_data_pipeline"])
+                    raw = json.loads(tool_results["plan_data_pipeline"])
+                    pipeline = PipelinePlan.model_validate(raw)
                     Separator()
                     H2("🔧 Data Pipeline Plan")
 
-                    if pipeline_data.get("query_strategy"):
+                    if pipeline.query_strategy:
                         with Card():
                             with CardHeader():
                                 CardTitle("Query Strategy")
                             with CardContent():
-                                P(str(pipeline_data["query_strategy"]))
+                                P(pipeline.query_strategy)
 
-                    if pipeline_data.get("pagination_approach"):
+                    if pipeline.pagination_approach:
                         with Card():
                             with CardHeader():
                                 CardTitle("Pagination Approach")
                             with CardContent():
-                                P(str(pipeline_data["pagination_approach"]))
+                                P(pipeline.pagination_approach)
 
-                    if pipeline_data.get("transformations"):
+                    if pipeline.transformations:
                         H3("Transformation Steps")
                         transform_rows = []
-                        for t in pipeline_data["transformations"]:
+                        for t in pipeline.transformations:
                             transform_rows.append({
-                                "Step": str(t.get("step_number", "")),
-                                "Description": t.get("description", ""),
-                                "SQL / Code": t.get("sql_or_code", ""),
+                                "Step": str(t.step_number),
+                                "Description": t.description,
+                                "SQL / Code": t.sql_or_code,
                             })
                         DataTable(
                             columns=[
@@ -796,18 +810,16 @@ def api_discovery(api_doc_url: str, question: str) -> PrefabApp:
                             rows=transform_rows,
                         )
 
-                    if pipeline_data.get("final_sql"):
+                    if pipeline.final_sql:
                         H3("Final SQL Query")
                         with Card():
                             with CardContent():
-                                P(str(pipeline_data["final_sql"]))
+                                P(pipeline.final_sql)
 
-                    if pipeline_data.get("estimated_complexity"):
-                        complexity = pipeline_data["estimated_complexity"]
-                        variant_map = {"low": "success", "medium": "warning", "high": "destructive"}
-                        Badge(f"Complexity: {complexity}")
+                    if pipeline.estimated_complexity:
+                        Badge(f"Complexity: {pipeline.estimated_complexity}")
 
-                except (json.JSONDecodeError, TypeError):
+                except (json.JSONDecodeError, TypeError, Exception):
                     pass
         else:
             with Alert(variant="warning"):
