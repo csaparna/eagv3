@@ -93,7 +93,7 @@ ATTACHED ARTIFCATS: ...date: [DATE], event: [EVENT]...
 3. NEVER fabricate tool names. Only use tools from MCP TOOLS.
 4. NEVER call a tool if you already have the answer.
 5. Keep natural language answers concise but ensure they are proper sentences, not code or tool syntax.
-6. Ensure that the goal was fully addressed by the response.
+6. Ensure that the goal is fully answered if the decision output is answer
 """
 
 

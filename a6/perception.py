@@ -52,7 +52,7 @@ REASONING PROCESS (Follow this mentally before generating output):
    - Attaching Artifacts: For the FIRST unfinished goal ONLY, check if it needs raw bytes from a previously fetched artifact.
      * Self-Check: Validate artifact references. Ensure the artifact ID exactly matches an entry in MEMORY HITS.
    - Contradictions Check: Ensure the current state does not contradict past successes.
-   - Order Preservation: NEVER reorder, insert in the middle, or drop goals. Only append new goals if new requirements arise.
+   - Order Preservation: NEVER reorder, insert in the middle, or drop goals. Only append new goals at the end if new requirements arise.
 
 ERROR HANDLING & FALLBACKS:
 - Ambiguous History / Uncertain Satisfaction: If it's unclear whether an action satisfied a goal, or if only raw tool output is present without a natural language answer, keep `done=false`.
