@@ -108,6 +108,7 @@ async def run(query: str) -> str:
             print(f"[Iteration {it}] ── perception.observe ──")
             obs = perception.observe(query, hits, history, prior_goals, run_id)
             prior_goals = obs.goals
+            print("Observed goals:", obs.goals)
             print(f"  -> {len(obs.goals)} goals, {sum(1 for g in obs.goals if g.done)} done")
 
             if all(g.done for g in obs.goals):
@@ -188,7 +189,22 @@ def main() -> None:
         nargs="?",
         default="What time is it in Denver?",
     )
+    parser.add_argument(
+        "--clean",
+        action="store_true",
+        help="Delete all files and folders in the state/ directory before running",
+    )
     args = parser.parse_args()
+
+    if args.clean:
+        import shutil
+        state_dir = Path(__file__).resolve().parent / "state"
+        if state_dir.exists():
+            shutil.rmtree(state_dir)
+            state_dir.mkdir(parents=True, exist_ok=True)
+            (state_dir / "memory.json").touch(exist_ok=True)
+            (state_dir / "artifacts").mkdir(parents=True, exist_ok=True)
+            print("Cleaned state/ directory.")
 
     print("═" * 60)
     print(f"agent6  query: {args.query}")

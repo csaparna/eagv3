@@ -61,6 +61,9 @@ class Memory:
 
     def __init__(self, state_path: Path = _STATE_PATH) -> None:
         self._path = state_path
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+        self._path.touch(exist_ok=True)
+
         self._items: list[MemoryItem] = []
         self._loaded = False
 

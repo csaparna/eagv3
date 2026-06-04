@@ -1,0 +1,6 @@
+.venv
+.env
+uv.lock
+state/
+*.json
+**__pycache__

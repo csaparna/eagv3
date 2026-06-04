@@ -844,7 +844,7 @@ ROUTER_DEFAULTS = {
     # qwen-3-235b respond. Using llama3.1-8b — small, fast, the natural router
     # shape. *** DEPRECATES MAY 27, 2026 *** — must update ROUTER_CEREBRAS_MODEL
     # before then, OR upgrade the Cerebras account to unlock gpt-oss-120b.
-    "cerebras": "llama3.1-8b",
+    "cerebras": "gpt-oss-120b",
     "groq": "llama-3.3-70b-versatile",
     "nvidia": "nvidia/llama-3.1-nemotron-nano-8b-v1",
     "github": "microsoft/Phi-4-mini-instruct",

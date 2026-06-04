@@ -352,7 +352,7 @@ LLM_ORDER=ollama,gemini,nvidia,groq,cerebras,openrouter,github
 
 # V3 router pool config
 ROUTER_ORDER=cerebras,groq,nvidia,github
-ROUTER_CEREBRAS_MODEL=llama3.1-8b           # ⚠️ deprecates May 27 2026 — update before then
+ROUTER_CEREBRAS_MODEL=gpt-oss-120b          
 ROUTER_GROQ_MODEL=llama-3.3-70b-versatile
 ROUTER_NVIDIA_MODEL=nvidia/llama-3.1-nemotron-nano-8b-v1
 ROUTER_GITHUB_MODEL=microsoft/Phi-4-mini-instruct
