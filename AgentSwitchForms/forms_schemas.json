@@ -1,0 +1,4648 @@
+{
+  "code_form": {
+    "name": "code_form",
+    "type": "select",
+    "required": false,
+    "options": [
+      "plain",
+      "url"
+    ]
+  },
+  "supplier_id": {
+    "name": "supplier_id",
+    "type": "link",
+    "required": false,
+    "to": "Party"
+  },
+  "default": "POLL-.YYYY.-.#####",
+  "vendor_id": {
+    "name": "vendor_id",
+    "type": "link",
+    "required": true,
+    "to": "Party"
+  },
+  "vendor_bank_account_number": {
+    "name": "vendor_bank_account_number",
+    "type": "text",
+    "required": false
+  },
+  "vendor_bank_name": {
+    "name": "vendor_bank_name",
+    "type": "text",
+    "required": false
+  },
+  "vendor_bank_code": {
+    "name": "vendor_bank_code",
+    "type": "text",
+    "required": false
+  },
+  "number_format": {
+    "name": "number_format",
+    "type": "select",
+    "required": false,
+    "options": [
+      "indian_lakh_crore",
+      "western_thousand_million"
+    ]
+  },
+  "date_format": {
+    "name": "date_format",
+    "type": "select",
+    "required": false,
+    "options": [
+      "dd/MM/yyyy",
+      "MM/dd/yyyy",
+      "yyyy-MM-dd",
+      "dd-MM-yyyy",
+      "dd MMM yyyy"
+    ]
+  },
+  "SupplierQuotation": {
+    "entity": "SupplierQuotation",
+    "domain": "accounting",
+    "kind": "transaction",
+    "behaviors": [
+      "numberable"
+    ],
+    "reserved_behaviors": [
+      "commentable"
+    ],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      },
+      {
+        "name": "rfq_id",
+        "type": "link",
+        "required": false,
+        "to": "PurchaseRfq"
+      },
+      {
+        "name": "vendor_id",
+        "type": "link",
+        "required": true,
+        "to": "Party"
+      },
+      {
+        "name": "date",
+        "type": "date",
+        "required": false
+      },
+      {
+        "name": "valid_till",
+        "type": "date",
+        "required": false
+      },
+      {
+        "name": "items",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "rfq_line_key": {
+            "type": "text"
+          },
+          "item_id": {
+            "type": "link",
+            "to": "Item"
+          },
+          "qty_break": {
+            "type": "number",
+            "description": "C-037 \u2014 the quantity this rate applies from. Carbon quotes per quantity break; a line with no break is a flat rate."
+          },
+          "rate": {
+            "type": "currency",
+            "required": true,
+            "default": 0
+          },
+          "lead_time_days": {
+            "type": "number",
+            "default": 0
+          },
+          "amount": {
+            "type": "currency",
+            "computed": "qty_break * rate"
+          }
+        }
+      },
+      {
+        "name": "total",
+        "type": "currency",
+        "required": false,
+        "computed": "sum(items.amount)"
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "status",
+        "type": "state",
+        "required": false,
+        "flow": "SupplierQuotationFlow"
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "submit",
+        "cancel",
+        "delete"
+      ],
+      "finance_admin": [
+        "read",
+        "create",
+        "write",
+        "cancel"
+      ],
+      "finance_user": [
+        "read",
+        "create",
+        "write",
+        "submit"
+      ],
+      "project_user": [
+        "read",
+        "create"
+      ],
+      "user": [
+        "read",
+        "create"
+      ]
+    },
+    "children": {
+      "items": {
+        "shape": {
+          "rfq_line_key": {
+            "type": "text"
+          },
+          "item_id": {
+            "type": "link",
+            "to": "Item"
+          },
+          "qty_break": {
+            "type": "number",
+            "description": "C-037 \u2014 the quantity this rate applies from. Carbon quotes per quantity break; a line with no break is a flat rate."
+          },
+          "rate": {
+            "type": "currency",
+            "required": true,
+            "default": 0
+          },
+          "lead_time_days": {
+            "type": "number",
+            "default": 0
+          },
+          "amount": {
+            "type": "currency",
+            "computed": "qty_break * rate"
+          }
+        }
+      }
+    },
+    "number_format": {
+      "default": "SQ-.YYYY.-.#####."
+    },
+    "flow": {
+      "name": "SupplierQuotationFlow",
+      "states": [
+        "received",
+        "selected",
+        "rejected"
+      ],
+      "initial": "received",
+      "transitions": [
+        {
+          "from": "received",
+          "to": "selected",
+          "action": "Select",
+          "role": "finance_user"
+        },
+        {
+          "from": "received",
+          "to": "rejected",
+          "action": "Reject",
+          "role": "finance_user"
+        }
+      ]
+    }
+  },
+  "party_id": {
+    "type": "text",
+    "required": true
+  },
+  "CustomerVendorPreferences": {
+    "entity": "CustomerVendorPreferences",
+    "domain": "accounting",
+    "kind": "config",
+    "behaviors": [],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      },
+      {
+        "name": "allow_duplicate_names",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "enable_customer_numbers",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "enable_vendor_numbers",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "default_customer_type",
+        "type": "select",
+        "required": false,
+        "options": [
+          "business",
+          "individual"
+        ]
+      },
+      {
+        "name": "enable_credit_limit",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "billing_address_format",
+        "type": "richtext",
+        "required": false
+      },
+      {
+        "name": "shipping_address_format",
+        "type": "richtext",
+        "required": false
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "delete"
+      ],
+      "finance_admin": [
+        "read",
+        "create",
+        "write"
+      ],
+      "finance_user": [
+        "read"
+      ]
+    },
+    "children": {}
+  },
+  "supplier_quotation_id": {
+    "name": "supplier_quotation_id",
+    "type": "link",
+    "required": false,
+    "to": "SupplierQuotation"
+  },
+  "enable_vendor_payments": {
+    "name": "enable_vendor_payments",
+    "type": "bool",
+    "required": false
+  },
+  "vendor_payment_method": {
+    "name": "vendor_payment_method",
+    "type": "select",
+    "required": false,
+    "options": [
+      "bank_transfer",
+      "upi",
+      "cheque",
+      "none"
+    ]
+  },
+  "VendorCredit": {
+    "entity": "VendorCredit",
+    "domain": "accounting",
+    "kind": "transaction",
+    "behaviors": [
+      "submittable",
+      "numberable"
+    ],
+    "reserved_behaviors": [
+      "commentable"
+    ],
+    "fields": [
+      {
+        "name": "allocation_history_version",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "allocation_history",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "event_id": {
+            "type": "text"
+          },
+          "operation_id": {
+            "type": "text"
+          },
+          "event_type": {
+            "type": "text"
+          },
+          "effective_date": {
+            "type": "date"
+          },
+          "recorded_at": {
+            "type": "text"
+          },
+          "amount": {
+            "type": "currency"
+          },
+          "target_entity": {
+            "type": "text"
+          },
+          "target_id": {
+            "type": "text"
+          },
+          "voucher_type": {
+            "type": "text"
+          },
+          "voucher_id": {
+            "type": "text"
+          },
+          "reverses_event_id": {
+            "type": "text"
+          },
+          "result": {
+            "type": "text"
+          }
+        }
+      },
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      },
+      {
+        "name": "vendor_id",
+        "type": "link",
+        "required": true,
+        "to": "Party"
+      },
+      {
+        "name": "vendor_credit_number",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "reference_number",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "date",
+        "type": "date",
+        "required": false
+      },
+      {
+        "name": "order_number",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "source_of_supply",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "destination_of_supply",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "gst_no",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "gst_treatment",
+        "type": "select",
+        "required": false,
+        "options": [
+          "business_gst",
+          "business_composition",
+          "consumer",
+          "overseas",
+          "unregistered_business",
+          "sez",
+          "deemed_export"
+        ]
+      },
+      {
+        "name": "is_reverse_charge",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "items",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "item_id": {
+            "type": "link",
+            "to": "Item"
+          },
+          "description": {
+            "type": "text"
+          },
+          "qty": {
+            "type": "number",
+            "required": true,
+            "default": 1
+          },
+          "rate": {
+            "type": "currency",
+            "required": true
+          },
+          "discount": {
+            "type": "number",
+            "subtype": "percent",
+            "default": 0
+          },
+          "tax_id": {
+            "type": "text"
+          },
+          "tax_percentage": {
+            "type": "number"
+          },
+          "hsn_or_sac": {
+            "type": "text"
+          },
+          "amount": {
+            "type": "currency",
+            "computed": "qty * rate * (1 - discount / 100)"
+          },
+          "cgst_rate": {
+            "type": "number",
+            "subtype": "percent"
+          },
+          "sgst_rate": {
+            "type": "number",
+            "subtype": "percent"
+          },
+          "igst_rate": {
+            "type": "number",
+            "subtype": "percent"
+          },
+          "cess_rate": {
+            "type": "number",
+            "subtype": "percent"
+          },
+          "is_inclusive": {
+            "type": "bool",
+            "default": false,
+            "_comment": "GST-20. Set from the document's `is_inclusive_tax` by engine/gst.py::apply_item_taxes. It lives on the LINE because `taxable_amount` is a child computed expression and a child cannot see its parent's columns."
+          },
+          "taxable_amount": {
+            "type": "currency",
+            "computed": "round(amount / (1 + is_inclusive * (cgst_rate + sgst_rate + utgst_rate + igst_rate + cess_rate) / 100), 2)",
+            "_comment": "GST-20. The value GST is charged on for THIS line, and the figure GSTR-1 table 12 declares per HSN. On an exclusive document it equals `amount`; on an inclusive one the tax is already inside `amount` and is extracted rather than added. The head amounts below read this, not `amount` \u2014 computing them on the gross declared 18% more output tax than an inclusive invoice had collected."
+          },
+          "cgst_amount": {
+            "type": "currency",
+            "computed": "round(taxable_amount * cgst_rate / 100, 2)"
+          },
+          "sgst_amount": {
+            "type": "currency",
+            "computed": "round(taxable_amount * sgst_rate / 100, 2)"
+          },
+          "igst_amount": {
+            "type": "currency",
+            "computed": "round(taxable_amount * igst_rate / 100, 2)"
+          },
+          "cess_amount": {
+            "type": "currency",
+            "computed": "round(taxable_amount * cess_rate / 100, 2)"
+          },
+          "tds_name": {
+            "type": "text"
+          },
+          "tds_percentage": {
+            "type": "number"
+          },
+          "tds_amount": {
+            "type": "currency"
+          },
+          "tds_section_code": {
+            "type": "text"
+          },
+          "tds_section": {
+            "type": "text"
+          },
+          "reverse_charge_tax_name": {
+            "type": "text"
+          },
+          "reverse_charge_tax_rate": {
+            "type": "number"
+          },
+          "reverse_charge_tax_type": {
+            "type": "text"
+          },
+          "utgst_rate": {
+            "type": "number",
+            "subtype": "percent"
+          },
+          "utgst_amount": {
+            "type": "currency",
+            "computed": "round(taxable_amount * utgst_rate / 100, 2)"
+          }
+        }
+      },
+      {
+        "name": "taxes",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "tax_type": {
+            "type": "text"
+          },
+          "rate": {
+            "type": "number",
+            "subtype": "percent"
+          },
+          "amount": {
+            "type": "currency"
+          }
+        }
+      },
+      {
+        "name": "net_total",
+        "type": "currency",
+        "required": false,
+        "computed": "sum(items.amount)"
+      },
+      {
+        "name": "shipping_charge",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "adjustment",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "round_off",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "total_tax",
+        "type": "currency",
+        "required": false,
+        "computed": "max(sum(taxes.amount), sum(items.cgst_amount) + sum(items.sgst_amount) + sum(items.utgst_amount) + sum(items.igst_amount) + sum(items.cess_amount))"
+      },
+      {
+        "name": "taxable_value",
+        "type": "currency",
+        "required": false,
+        "computed": "round(net_total + shipping_charge + adjustment - total_tax * is_inclusive_tax, 2)"
+      },
+      {
+        "name": "is_inclusive_tax",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "grand_total",
+        "type": "currency",
+        "required": false,
+        "computed": "round(taxable_value + total_tax + tcs_amount - tds_amount + round_off, 2)"
+      },
+      {
+        "name": "balance",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "currency_code",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "approval_status",
+        "type": "select",
+        "required": false,
+        "options": [
+          "not_required",
+          "pending_approval",
+          "approved",
+          "rejected"
+        ]
+      },
+      {
+        "name": "tds_name",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "tds_percentage",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "tds_amount",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "tds_section_code",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "tds_section",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "tcs_tax_name",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "tcs_percentage",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "tcs_amount",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "nature_of_collection",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "payment_gateway",
+        "type": "select",
+        "required": false,
+        "options": [
+          "none",
+          "paypal",
+          "stripe",
+          "razorpay",
+          "paytm",
+          "bank_transfer",
+          "cash",
+          "cheque",
+          "upi",
+          "other"
+        ]
+      },
+      {
+        "name": "retention_amount",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "status",
+        "type": "state",
+        "required": false,
+        "flow": "VendorCreditFlow"
+      }
+    ],
+    "permissions": {
+      "finance_admin": [
+        "read",
+        "create",
+        "write",
+        "submit",
+        "cancel",
+        "delete"
+      ],
+      "finance_user": [
+        "read",
+        "create",
+        "write",
+        "submit"
+      ],
+      "viewer": [
+        "read"
+      ]
+    },
+    "children": {
+      "allocation_history": {
+        "shape": {
+          "event_id": {
+            "type": "text"
+          },
+          "operation_id": {
+            "type": "text"
+          },
+          "event_type": {
+            "type": "text"
+          },
+          "effective_date": {
+            "type": "date"
+          },
+          "recorded_at": {
+            "type": "text"
+          },
+          "amount": {
+            "type": "currency"
+          },
+          "target_entity": {
+            "type": "text"
+          },
+          "target_id": {
+            "type": "text"
+          },
+          "voucher_type": {
+            "type": "text"
+          },
+          "voucher_id": {
+            "type": "text"
+          },
+          "reverses_event_id": {
+            "type": "text"
+          },
+          "result": {
+            "type": "text"
+          }
+        }
+      },
+      "items": {
+        "shape": {
+          "item_id": {
+            "type": "link",
+            "to": "Item"
+          },
+          "description": {
+            "type": "text"
+          },
+          "qty": {
+            "type": "number",
+            "required": true,
+            "default": 1
+          },
+          "rate": {
+            "type": "currency",
+            "required": true
+          },
+          "discount": {
+            "type": "number",
+            "subtype": "percent",
+            "default": 0
+          },
+          "tax_id": {
+            "type": "text"
+          },
+          "tax_percentage": {
+            "type": "number"
+          },
+          "hsn_or_sac": {
+            "type": "text"
+          },
+          "amount": {
+            "type": "currency",
+            "computed": "qty * rate * (1 - discount / 100)"
+          },
+          "cgst_rate": {
+            "type": "number",
+            "subtype": "percent"
+          },
+          "sgst_rate": {
+            "type": "number",
+            "subtype": "percent"
+          },
+          "igst_rate": {
+            "type": "number",
+            "subtype": "percent"
+          },
+          "cess_rate": {
+            "type": "number",
+            "subtype": "percent"
+          },
+          "is_inclusive": {
+            "type": "bool",
+            "default": false,
+            "_comment": "GST-20. Set from the document's `is_inclusive_tax` by engine/gst.py::apply_item_taxes. It lives on the LINE because `taxable_amount` is a child computed expression and a child cannot see its parent's columns."
+          },
+          "taxable_amount": {
+            "type": "currency",
+            "computed": "round(amount / (1 + is_inclusive * (cgst_rate + sgst_rate + utgst_rate + igst_rate + cess_rate) / 100), 2)",
+            "_comment": "GST-20. The value GST is charged on for THIS line, and the figure GSTR-1 table 12 declares per HSN. On an exclusive document it equals `amount`; on an inclusive one the tax is already inside `amount` and is extracted rather than added. The head amounts below read this, not `amount` \u2014 computing them on the gross declared 18% more output tax than an inclusive invoice had collected."
+          },
+          "cgst_amount": {
+            "type": "currency",
+            "computed": "round(taxable_amount * cgst_rate / 100, 2)"
+          },
+          "sgst_amount": {
+            "type": "currency",
+            "computed": "round(taxable_amount * sgst_rate / 100, 2)"
+          },
+          "igst_amount": {
+            "type": "currency",
+            "computed": "round(taxable_amount * igst_rate / 100, 2)"
+          },
+          "cess_amount": {
+            "type": "currency",
+            "computed": "round(taxable_amount * cess_rate / 100, 2)"
+          },
+          "tds_name": {
+            "type": "text"
+          },
+          "tds_percentage": {
+            "type": "number"
+          },
+          "tds_amount": {
+            "type": "currency"
+          },
+          "tds_section_code": {
+            "type": "text"
+          },
+          "tds_section": {
+            "type": "text"
+          },
+          "reverse_charge_tax_name": {
+            "type": "text"
+          },
+          "reverse_charge_tax_rate": {
+            "type": "number"
+          },
+          "reverse_charge_tax_type": {
+            "type": "text"
+          },
+          "utgst_rate": {
+            "type": "number",
+            "subtype": "percent"
+          },
+          "utgst_amount": {
+            "type": "currency",
+            "computed": "round(taxable_amount * utgst_rate / 100, 2)"
+          }
+        }
+      },
+      "taxes": {
+        "shape": {
+          "tax_type": {
+            "type": "text"
+          },
+          "rate": {
+            "type": "number",
+            "subtype": "percent"
+          },
+          "amount": {
+            "type": "currency"
+          }
+        }
+      }
+    },
+    "number_format": {
+      "default": "VC-.YYYY.-.#####."
+    },
+    "flow": {
+      "name": "VendorCreditFlow",
+      "states": [
+        "draft",
+        "open",
+        "closed",
+        "void"
+      ],
+      "initial": "draft",
+      "transitions": [
+        {
+          "from": "draft",
+          "to": "open",
+          "action": "Open",
+          "role": "finance_user",
+          "reverse": {
+            "action": "Void",
+            "to": "void"
+          }
+        },
+        {
+          "from": "open",
+          "to": "closed",
+          "action": "Close",
+          "role": "finance_user",
+          "auto": true
+        },
+        {
+          "from": "open",
+          "to": "void",
+          "action": "Void",
+          "role": "finance_admin"
+        },
+        {
+          "from": "closed",
+          "to": "void",
+          "action": "Void",
+          "role": "finance_admin"
+        },
+        {
+          "from": "draft",
+          "to": "void",
+          "action": "Void",
+          "role": "finance_admin"
+        }
+      ]
+    }
+  },
+  "supplier_ids": {
+    "name": "supplier_ids",
+    "type": "text",
+    "required": false
+  },
+  "VendorCreditPreferences": {
+    "entity": "VendorCreditPreferences",
+    "domain": "accounting",
+    "kind": "config",
+    "behaviors": [],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      },
+      {
+        "name": "auto_apply_to_bills",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "require_reason",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "allow_refund",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "default_terms",
+        "type": "richtext",
+        "required": false
+      },
+      {
+        "name": "default_notes",
+        "type": "richtext",
+        "required": false
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "delete"
+      ],
+      "finance_admin": [
+        "read",
+        "create",
+        "write"
+      ],
+      "finance_user": [
+        "read"
+      ]
+    },
+    "children": {}
+  },
+  "receivable": "INV-.YYYY.-.#####.",
+  "payable": "PINV-.YYYY.-.#####.",
+  "enable_vendor_portal": {
+    "name": "enable_vendor_portal",
+    "type": "bool",
+    "required": false
+  },
+  "VendorPortalPreferences": {
+    "entity": "VendorPortalPreferences",
+    "domain": "accounting",
+    "kind": "config",
+    "behaviors": [],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      },
+      {
+        "name": "portal_name",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "banner_message",
+        "type": "richtext",
+        "required": false
+      },
+      {
+        "name": "enable_mfa",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "allow_vendor_signup",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "notify_portal_activity",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "allow_bill_submission",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "allow_document_upload",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "show_purchase_orders",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "show_payments",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "show_vendor_credits",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "enable_identity_verification",
+        "type": "bool",
+        "required": false
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "delete"
+      ],
+      "finance_admin": [
+        "read",
+        "create",
+        "write"
+      ],
+      "finance_user": [
+        "read"
+      ]
+    },
+    "children": {}
+  },
+  "preferred_vendor_id": {
+    "type": "link",
+    "to": "Party"
+  },
+  "receive": "GRN-.YYYY.-.#####.",
+  "pay": "PAY-OUT-.YYYY.-.#####.",
+  "page_number_format": {
+    "name": "page_number_format",
+    "type": "text",
+    "required": false
+  },
+  "org_address_format": {
+    "name": "org_address_format",
+    "type": "text",
+    "required": false
+  },
+  "billing_address_format": {
+    "name": "billing_address_format",
+    "type": "text",
+    "required": false
+  },
+  "shipping_address_format": {
+    "name": "shipping_address_format",
+    "type": "text",
+    "required": false
+  },
+  "target_party_id": {
+    "name": "target_party_id",
+    "type": "link",
+    "required": false,
+    "to": "Party"
+  },
+  "lead_time_days": {
+    "type": "number",
+    "default": 0
+  },
+  "suppliers": {
+    "name": "suppliers",
+    "type": "children",
+    "required": false,
+    "shape": {
+      "supplier_id": {
+        "type": "link",
+        "to": "Party"
+      },
+      "rate": {
+        "type": "currency"
+      }
+    }
+  },
+  "lead_id": {
+    "name": "lead_id",
+    "type": "link",
+    "required": false,
+    "to": "Lead"
+  },
+  "Lead": {
+    "entity": "Lead",
+    "domain": "sales",
+    "kind": "record",
+    "behaviors": [],
+    "reserved_behaviors": [
+      "assignable",
+      "commentable",
+      "trackable"
+    ],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      },
+      {
+        "name": "party_id",
+        "type": "link",
+        "required": true,
+        "to": "Party"
+      },
+      {
+        "name": "source",
+        "type": "select",
+        "required": false,
+        "options": [
+          "website",
+          "referral",
+          "campaign",
+          "cold_call",
+          "social_media"
+        ]
+      },
+      {
+        "name": "notes",
+        "type": "richtext",
+        "required": false
+      },
+      {
+        "name": "value",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "next_action",
+        "type": "date",
+        "required": false
+      },
+      {
+        "name": "status",
+        "type": "state",
+        "required": false,
+        "flow": "LeadFlow"
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "delete"
+      ],
+      "sales_viewer": [
+        "read"
+      ],
+      "sales_user": [
+        "read",
+        "create",
+        "write",
+        "submit"
+      ]
+    },
+    "children": {},
+    "flow": {
+      "name": "LeadFlow",
+      "states": [
+        "new",
+        "contacted",
+        "qualified",
+        "disqualified",
+        "converted"
+      ],
+      "initial": "new",
+      "transitions": [
+        {
+          "from": "new",
+          "to": "contacted",
+          "action": "Contact",
+          "role": "any"
+        },
+        {
+          "from": "new",
+          "to": "disqualified",
+          "action": "Disqualify",
+          "role": "any"
+        },
+        {
+          "from": "contacted",
+          "to": "qualified",
+          "action": "Qualify",
+          "role": "any"
+        },
+        {
+          "from": "contacted",
+          "to": "disqualified",
+          "action": "Disqualify",
+          "role": "any"
+        },
+        {
+          "from": "qualified",
+          "to": "converted",
+          "action": "Convert",
+          "role": "any"
+        },
+        {
+          "from": "qualified",
+          "to": "disqualified",
+          "action": "Disqualify",
+          "role": "any"
+        }
+      ]
+    }
+  },
+  "format": {
+    "name": "format",
+    "type": "text",
+    "required": false
+  },
+  "transform_matrix": {
+    "type": "code",
+    "language": "json"
+  },
+  "project_lead": {
+    "name": "project_lead",
+    "type": "link",
+    "required": false,
+    "to": "Party"
+  },
+  "DesignSupplierRequest": {
+    "entity": "DesignSupplierRequest",
+    "domain": "designreview",
+    "kind": "transaction",
+    "behaviors": [
+      "numberable"
+    ],
+    "reserved_behaviors": [
+      "trackable"
+    ],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": true,
+        "to": "Company"
+      },
+      {
+        "name": "review_id",
+        "type": "link",
+        "required": true,
+        "to": "DesignReview"
+      },
+      {
+        "name": "supplier_id",
+        "type": "link",
+        "required": true,
+        "to": "Party"
+      },
+      {
+        "name": "invite_id",
+        "type": "link",
+        "required": true,
+        "to": "DesignShare"
+      },
+      {
+        "name": "response_feedback_id",
+        "type": "link",
+        "required": false,
+        "to": "DesignFeedback"
+      },
+      {
+        "name": "response_due_at",
+        "type": "date",
+        "required": true,
+        "subtype": "datetime"
+      },
+      {
+        "name": "reminder_due_at",
+        "type": "date",
+        "required": true,
+        "subtype": "datetime"
+      },
+      {
+        "name": "status",
+        "type": "state",
+        "required": true,
+        "flow": "DesignSupplierRequestFlow"
+      },
+      {
+        "name": "responded_at",
+        "type": "date",
+        "required": false,
+        "subtype": "datetime"
+      },
+      {
+        "name": "expired_at",
+        "type": "date",
+        "required": false,
+        "subtype": "datetime"
+      },
+      {
+        "name": "last_reminded_at",
+        "type": "date",
+        "required": false,
+        "subtype": "datetime"
+      },
+      {
+        "name": "reminder_count",
+        "type": "number",
+        "required": false,
+        "subtype": "int"
+      },
+      {
+        "name": "transport_status",
+        "type": "select",
+        "required": false,
+        "options": [
+          "not_attempted",
+          "in_app_saved",
+          "failed"
+        ]
+      },
+      {
+        "name": "last_operation_key",
+        "type": "text",
+        "required": false
+      }
+    ],
+    "permissions": {
+      "design_admin": [
+        "read",
+        "create",
+        "write",
+        "delete",
+        "submit"
+      ],
+      "design_user": [
+        "read",
+        "create",
+        "write"
+      ]
+    },
+    "children": {},
+    "number_format": {
+      "default": "SR-.YYYY.-.#####"
+    },
+    "flow": {
+      "name": "DesignSupplierRequestFlow",
+      "states": [
+        "pending",
+        "responded",
+        "expired",
+        "cancelled"
+      ],
+      "initial": "pending",
+      "transitions": [
+        {
+          "from": "pending",
+          "to": "responded",
+          "action": "Record Supplier Response",
+          "role": "system"
+        },
+        {
+          "from": "pending",
+          "to": "expired",
+          "action": "Expire Request",
+          "role": "system"
+        },
+        {
+          "from": "pending",
+          "to": "cancelled",
+          "action": "Cancel Request",
+          "role": "design_admin"
+        }
+      ]
+    }
+  },
+  "responsible_party": {
+    "name": "responsible_party",
+    "type": "select",
+    "required": false,
+    "options": [
+      "us",
+      "counterparty",
+      "both"
+    ]
+  },
+  "second_party_id": {
+    "name": "second_party_id",
+    "type": "link",
+    "required": false,
+    "to": "Party"
+  },
+  "amount_formula": {
+    "type": "text"
+  },
+  "consent_state": {
+    "name": "consent_state",
+    "type": "text",
+    "required": false
+  },
+  "consent_source": {
+    "name": "consent_source",
+    "type": "text",
+    "required": false
+  },
+  "consent_event_id": {
+    "name": "consent_event_id",
+    "type": "text",
+    "required": false
+  },
+  "owner_party_id": {
+    "name": "owner_party_id",
+    "type": "link",
+    "required": false,
+    "to": "Party"
+  },
+  "backup_owner_party_id": {
+    "name": "backup_owner_party_id",
+    "type": "link",
+    "required": false,
+    "to": "Party"
+  },
+  "supervisor_party_id": {
+    "name": "supervisor_party_id",
+    "type": "link",
+    "required": false,
+    "to": "Party"
+  },
+  "ChannelConsent": {
+    "entity": "ChannelConsent",
+    "domain": "channels",
+    "kind": "ledger",
+    "behaviors": [],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      },
+      {
+        "name": "channel_type",
+        "type": "select",
+        "required": false,
+        "options": [
+          "whatsapp",
+          "sms",
+          "telegram",
+          "slack",
+          "discord",
+          "web",
+          "email"
+        ]
+      },
+      {
+        "name": "address",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "party_id",
+        "type": "link",
+        "required": false,
+        "to": "Party"
+      },
+      {
+        "name": "channel_config_id",
+        "type": "link",
+        "required": false,
+        "to": "ChannelConfig"
+      },
+      {
+        "name": "purpose",
+        "type": "select",
+        "required": false,
+        "options": [
+          "all",
+          "marketing",
+          "transactional",
+          "service"
+        ]
+      },
+      {
+        "name": "state",
+        "type": "select",
+        "required": false,
+        "options": [
+          "opted_in",
+          "opted_out"
+        ]
+      },
+      {
+        "name": "source",
+        "type": "select",
+        "required": false,
+        "options": [
+          "inbound_stop_keyword",
+          "inbound_start_keyword",
+          "staff_recorded",
+          "provider_sync",
+          "import_recorded"
+        ]
+      },
+      {
+        "name": "evidence",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "event_id",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "recorded_at",
+        "type": "date",
+        "required": false,
+        "subtype": "datetime"
+      },
+      {
+        "name": "recorded_by",
+        "type": "text",
+        "required": false
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create"
+      ],
+      "agent_admin": [
+        "read",
+        "create"
+      ],
+      "support_user": [
+        "read",
+        "create"
+      ],
+      "agent_user": [
+        "read"
+      ],
+      "auditor": [
+        "read"
+      ]
+    },
+    "children": {}
+  },
+  "EsignConsentReceipt": {
+    "entity": "EsignConsentReceipt",
+    "domain": "esign",
+    "kind": "ledger",
+    "behaviors": [],
+    "fields": [
+      {
+        "name": "esign_document_id",
+        "type": "link",
+        "required": true,
+        "to": "EsignDocument"
+      },
+      {
+        "name": "esign_signer_id",
+        "type": "link",
+        "required": true,
+        "to": "EsignSigner"
+      },
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      },
+      {
+        "name": "signer_email",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "signer_name",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "auth_method",
+        "type": "select",
+        "required": false,
+        "options": [
+          "email_link",
+          "access_code"
+        ]
+      },
+      {
+        "name": "auth_evidence",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "consent_text",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "consent_version_digest",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "consented_at",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "document_content_hash",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "document_version_id",
+        "type": "link",
+        "required": false,
+        "to": "EsignDocumentVersion"
+      },
+      {
+        "name": "field_evidence_digest",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "ip_address",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "user_agent",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "issued_at",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "payload_version",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "signature_alg",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "signature",
+        "type": "text",
+        "required": false
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create"
+      ],
+      "auditor": [
+        "read"
+      ],
+      "user": [
+        "read"
+      ]
+    },
+    "children": {}
+  },
+  "consent_required": {
+    "name": "consent_required",
+    "type": "bool",
+    "required": false
+  },
+  "consent_text": {
+    "name": "consent_text",
+    "type": "text",
+    "required": false
+  },
+  "assignee_party_id": {
+    "name": "assignee_party_id",
+    "type": "link",
+    "required": false,
+    "to": "Party"
+  },
+  "response_minutes": {
+    "name": "response_minutes",
+    "type": "number",
+    "required": false
+  },
+  "track_non_conformances": {
+    "name": "track_non_conformances",
+    "type": "bool",
+    "required": false
+  },
+  "vendor_warehouse_id": {
+    "name": "vendor_warehouse_id",
+    "type": "link",
+    "required": false,
+    "to": "Warehouse"
+  },
+  "notify_party_id": {
+    "name": "notify_party_id",
+    "type": "link",
+    "required": false,
+    "to": "Party"
+  },
+  "PlatformDomainConfig": {
+    "entity": "PlatformDomainConfig",
+    "domain": "email",
+    "kind": "config",
+    "behaviors": [],
+    "reserved_behaviors": [
+      "trackable"
+    ],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": true,
+        "to": "Company"
+      },
+      {
+        "name": "purpose",
+        "type": "select",
+        "required": true,
+        "options": [
+          "public",
+          "agent"
+        ]
+      },
+      {
+        "name": "domain_name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "hosted_domain_id",
+        "type": "link",
+        "required": false,
+        "to": "HostedDomain"
+      },
+      {
+        "name": "is_active",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "default_tier",
+        "type": "select",
+        "required": false,
+        "options": [
+          "public_free"
+        ]
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "required": false
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "delete"
+      ],
+      "user": []
+    },
+    "children": {}
+  },
+  "signup_form_title": {
+    "name": "signup_form_title",
+    "type": "text",
+    "required": false
+  },
+  "signup_form_description": {
+    "name": "signup_form_description",
+    "type": "text",
+    "required": false
+  },
+  "attestation_format": {
+    "name": "attestation_format",
+    "type": "text",
+    "required": false
+  },
+  "response_time_hours": {
+    "type": "number"
+  },
+  "WebForm": {
+    "entity": "WebForm",
+    "domain": "crm",
+    "kind": "record",
+    "behaviors": [],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "fields",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "key": {
+            "type": "text",
+            "required": true
+          },
+          "label": {
+            "type": "text",
+            "required": true
+          },
+          "type": {
+            "type": "select",
+            "options": [
+              "text",
+              "email",
+              "textarea",
+              "number",
+              "date",
+              "select"
+            ]
+          },
+          "required": {
+            "type": "bool",
+            "default": false
+          }
+        }
+      },
+      {
+        "name": "redirect_url",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "notify_email",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "is_active",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "submission_count",
+        "type": "number",
+        "required": false
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "delete"
+      ]
+    },
+    "children": {
+      "fields": {
+        "shape": {
+          "key": {
+            "type": "text",
+            "required": true
+          },
+          "label": {
+            "type": "text",
+            "required": true
+          },
+          "type": {
+            "type": "select",
+            "options": [
+              "text",
+              "email",
+              "textarea",
+              "number",
+              "date",
+              "select"
+            ]
+          },
+          "required": {
+            "type": "bool",
+            "default": false
+          }
+        }
+      }
+    }
+  },
+  "account_party_id": {
+    "name": "account_party_id",
+    "type": "link",
+    "required": true,
+    "to": "Party"
+  },
+  "contact_party_id": {
+    "type": "link",
+    "to": "Party",
+    "required": true
+  },
+  "auto_create_deal_on_lead_convert": {
+    "name": "auto_create_deal_on_lead_convert",
+    "type": "bool",
+    "required": false
+  },
+  "lead_scoring_enabled": {
+    "name": "lead_scoring_enabled",
+    "type": "bool",
+    "required": false
+  },
+  "lead_score_threshold": {
+    "name": "lead_score_threshold",
+    "type": "number",
+    "required": false
+  },
+  "auto_assign_leads": {
+    "name": "auto_assign_leads",
+    "type": "bool",
+    "required": false
+  },
+  "enable_web_to_lead": {
+    "name": "enable_web_to_lead",
+    "type": "bool",
+    "required": false
+  },
+  "Party": {
+    "entity": "Party",
+    "domain": "core",
+    "kind": "record",
+    "behaviors": [],
+    "reserved_behaviors": [
+      "commentable",
+      "trackable",
+      "versionable",
+      "importable"
+    ],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "salutation",
+        "type": "select",
+        "required": false,
+        "options": [
+          "Mr.",
+          "Mrs.",
+          "Ms.",
+          "Dr.",
+          "Prof."
+        ]
+      },
+      {
+        "name": "first_name",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "last_name",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "type",
+        "type": "select",
+        "required": false,
+        "options": [
+          "individual",
+          "organization"
+        ]
+      },
+      {
+        "name": "email",
+        "type": "email",
+        "required": false
+      },
+      {
+        "name": "phone",
+        "type": "phone",
+        "required": false
+      },
+      {
+        "name": "image",
+        "type": "file",
+        "required": false
+      },
+      {
+        "name": "birthday",
+        "type": "date",
+        "required": false
+      },
+      {
+        "name": "anniversary",
+        "type": "date",
+        "required": false
+      },
+      {
+        "name": "nickname",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "pronouns",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "job_title",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "prefix",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "suffix",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "photo_url",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "vcard_uid",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "vcard_rev",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "roles",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "role": {
+            "type": "select",
+            "options": [
+              "customer",
+              "supplier",
+              "employee",
+              "lead",
+              "prospect",
+              "student",
+              "instructor",
+              "partner",
+              "guardian",
+              "parent",
+              "patient",
+              "referrer",
+              "contact"
+            ],
+            "description": "What this party IS to the business. A school's parent is a `guardian`, not a `customer`; a clinic's referring GP is a `referrer`, not a `partner`. Three agents building school and clinic data had to file parents and GPs as `customer`/`partner` because nothing else fitted \u2014 and terminology renames Party to Student, so a mother appeared under a \"Student\" label."
+          },
+          "since": {
+            "type": "date"
+          },
+          "active": {
+            "type": "bool",
+            "default": true
+          }
+        }
+      },
+      {
+        "name": "contacts",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "type": {
+            "type": "select",
+            "options": [
+              "phone",
+              "email",
+              "whatsapp",
+              "linkedin",
+              "other"
+            ]
+          },
+          "value": {
+            "type": "text",
+            "required": true
+          },
+          "primary": {
+            "type": "bool"
+          }
+        }
+      },
+      {
+        "name": "addresses",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "label": {
+            "type": "select",
+            "options": [
+              "billing",
+              "shipping",
+              "office",
+              "home",
+              "other"
+            ]
+          },
+          "attention": {
+            "type": "text"
+          },
+          "line1": {
+            "type": "text"
+          },
+          "street2": {
+            "type": "text"
+          },
+          "line2": {
+            "type": "text"
+          },
+          "city": {
+            "type": "text"
+          },
+          "county": {
+            "type": "text"
+          },
+          "state": {
+            "type": "text"
+          },
+          "country": {
+            "type": "text"
+          },
+          "postal": {
+            "type": "text"
+          },
+          "phone": {
+            "type": "phone"
+          },
+          "fax": {
+            "type": "text"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "tags",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "tag": {
+            "type": "text"
+          }
+        }
+      },
+      {
+        "name": "communication_preferences",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "event_id": {
+            "type": "text"
+          },
+          "channel": {
+            "type": "select",
+            "options": [
+              "email"
+            ]
+          },
+          "purpose": {
+            "type": "select",
+            "options": [
+              "marketing",
+              "transactional"
+            ]
+          },
+          "state": {
+            "type": "select",
+            "options": [
+              "opted_in",
+              "opted_out",
+              "unknown"
+            ]
+          },
+          "source": {
+            "type": "select",
+            "options": [
+              "staff_recorded",
+              "crm_workflow",
+              "storefront_newsletter",
+              "email_subscription",
+              "email_double_opt_in",
+              "email_unsubscribe"
+            ]
+          },
+          "evidence": {
+            "type": "text"
+          },
+          "recorded_at": {
+            "type": "date",
+            "subtype": "datetime"
+          },
+          "recorded_by": {
+            "type": "text"
+          }
+        }
+      },
+      {
+        "name": "gst_no",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "gst_treatment",
+        "type": "select",
+        "required": false,
+        "options": [
+          "business_gst",
+          "business_composition",
+          "consumer",
+          "overseas",
+          "unregistered_business",
+          "sez",
+          "deemed_export"
+        ]
+      },
+      {
+        "name": "place_of_supply",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "pan",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "credit_limit",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "payment_terms",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "payment_terms_label",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "company_name",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "contact_type",
+        "type": "select",
+        "required": false,
+        "options": [
+          "customer",
+          "vendor",
+          "both"
+        ]
+      },
+      {
+        "name": "customer_sub_type",
+        "type": "select",
+        "required": false,
+        "options": [
+          "business",
+          "individual"
+        ]
+      },
+      {
+        "name": "currency_id",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "tax_id",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "opening_balance",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "portal_enabled",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "is_portal_enabled",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "website",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "facebook",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "twitter",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "taxable",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "tax_name",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "tax_exemption_reason",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "owner_name",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "msme_no",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "msme_type",
+        "type": "select",
+        "required": false,
+        "options": [
+          "micro",
+          "small",
+          "medium"
+        ]
+      },
+      {
+        "name": "is_msme",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "bank_details",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "bank_name": {
+            "type": "text"
+          },
+          "account_number": {
+            "type": "text"
+          },
+          "ifsc": {
+            "type": "text"
+          },
+          "branch": {
+            "type": "text"
+          }
+        }
+      },
+      {
+        "name": "beneficiary_name",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "vendor_bank_account_number",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "vendor_bank_name",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "vendor_bank_code",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "us_tax_classification",
+        "type": "select",
+        "required": false,
+        "options": [
+          "individual_sole_proprietor",
+          "c_corporation",
+          "s_corporation",
+          "partnership",
+          "trust_estate",
+          "llc_c_corp",
+          "llc_s_corp",
+          "llc_partnership",
+          "other"
+        ]
+      },
+      {
+        "name": "tin_type",
+        "type": "select",
+        "required": false,
+        "options": [
+          "ssn",
+          "ein",
+          "itin",
+          "atin"
+        ]
+      },
+      {
+        "name": "tin",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "w9_on_file",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "w9_received_date",
+        "type": "date",
+        "required": false
+      },
+      {
+        "name": "w9_signed_name",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "is_1099_vendor",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "form_1099_type",
+        "type": "select",
+        "required": false,
+        "options": [
+          "1099-NEC",
+          "1099-MISC"
+        ]
+      },
+      {
+        "name": "form_1099_box",
+        "type": "select",
+        "required": false,
+        "options": [
+          "NEC-1",
+          "MISC-1",
+          "MISC-2",
+          "MISC-3",
+          "MISC-5",
+          "MISC-6",
+          "MISC-10",
+          "MISC-14"
+        ]
+      },
+      {
+        "name": "exempt_payee_code",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "fatca_exemption_code",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "backup_withholding",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "privacy_state",
+        "type": "select",
+        "required": false,
+        "options": [
+          "normal",
+          "restricted",
+          "erased"
+        ]
+      },
+      {
+        "name": "privacy_state_at",
+        "type": "date",
+        "required": false,
+        "subtype": "datetime"
+      },
+      {
+        "name": "privacy_state_reason",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "privacy_erase_not_before",
+        "type": "date",
+        "required": false
+      },
+      {
+        "name": "privacy_request_id",
+        "type": "link",
+        "required": false,
+        "to": "PrivacyRequest"
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "delete"
+      ],
+      "finance_admin": [
+        "read",
+        "create",
+        "write"
+      ],
+      "finance_user": [
+        "read",
+        "create",
+        "write"
+      ],
+      "hr_user": [
+        "read",
+        "create",
+        "write"
+      ],
+      "sales_user": [
+        "read",
+        "create",
+        "write"
+      ],
+      "support_user": [
+        "read",
+        "create",
+        "write"
+      ],
+      "project_user": [
+        "read",
+        "create",
+        "write"
+      ],
+      "accountant": [
+        "read",
+        "create",
+        "write"
+      ],
+      "instructor": [
+        "read",
+        "create"
+      ],
+      "student": [
+        "read"
+      ],
+      "auditor": [
+        "read"
+      ],
+      "viewer": [
+        "read"
+      ],
+      "user": [
+        "read",
+        "create",
+        "write"
+      ]
+    },
+    "children": {
+      "roles": {
+        "shape": {
+          "role": {
+            "type": "select",
+            "options": [
+              "customer",
+              "supplier",
+              "employee",
+              "lead",
+              "prospect",
+              "student",
+              "instructor",
+              "partner",
+              "guardian",
+              "parent",
+              "patient",
+              "referrer",
+              "contact"
+            ],
+            "description": "What this party IS to the business. A school's parent is a `guardian`, not a `customer`; a clinic's referring GP is a `referrer`, not a `partner`. Three agents building school and clinic data had to file parents and GPs as `customer`/`partner` because nothing else fitted \u2014 and terminology renames Party to Student, so a mother appeared under a \"Student\" label."
+          },
+          "since": {
+            "type": "date"
+          },
+          "active": {
+            "type": "bool",
+            "default": true
+          }
+        }
+      },
+      "contacts": {
+        "shape": {
+          "type": {
+            "type": "select",
+            "options": [
+              "phone",
+              "email",
+              "whatsapp",
+              "linkedin",
+              "other"
+            ]
+          },
+          "value": {
+            "type": "text",
+            "required": true
+          },
+          "primary": {
+            "type": "bool"
+          }
+        }
+      },
+      "addresses": {
+        "shape": {
+          "label": {
+            "type": "select",
+            "options": [
+              "billing",
+              "shipping",
+              "office",
+              "home",
+              "other"
+            ]
+          },
+          "attention": {
+            "type": "text"
+          },
+          "line1": {
+            "type": "text"
+          },
+          "street2": {
+            "type": "text"
+          },
+          "line2": {
+            "type": "text"
+          },
+          "city": {
+            "type": "text"
+          },
+          "county": {
+            "type": "text"
+          },
+          "state": {
+            "type": "text"
+          },
+          "country": {
+            "type": "text"
+          },
+          "postal": {
+            "type": "text"
+          },
+          "phone": {
+            "type": "phone"
+          },
+          "fax": {
+            "type": "text"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          }
+        }
+      },
+      "tags": {
+        "shape": {
+          "tag": {
+            "type": "text"
+          }
+        }
+      },
+      "communication_preferences": {
+        "shape": {
+          "event_id": {
+            "type": "text"
+          },
+          "channel": {
+            "type": "select",
+            "options": [
+              "email"
+            ]
+          },
+          "purpose": {
+            "type": "select",
+            "options": [
+              "marketing",
+              "transactional"
+            ]
+          },
+          "state": {
+            "type": "select",
+            "options": [
+              "opted_in",
+              "opted_out",
+              "unknown"
+            ]
+          },
+          "source": {
+            "type": "select",
+            "options": [
+              "staff_recorded",
+              "crm_workflow",
+              "storefront_newsletter",
+              "email_subscription",
+              "email_double_opt_in",
+              "email_unsubscribe"
+            ]
+          },
+          "evidence": {
+            "type": "text"
+          },
+          "recorded_at": {
+            "type": "date",
+            "subtype": "datetime"
+          },
+          "recorded_by": {
+            "type": "text"
+          }
+        }
+      },
+      "bank_details": {
+        "shape": {
+          "bank_name": {
+            "type": "text"
+          },
+          "account_number": {
+            "type": "text"
+          },
+          "ifsc": {
+            "type": "text"
+          },
+          "branch": {
+            "type": "text"
+          }
+        }
+      }
+    }
+  },
+  "is_platform": {
+    "name": "is_platform",
+    "type": "bool",
+    "required": false
+  },
+  "party_fields_erased": {
+    "name": "party_fields_erased",
+    "type": "code",
+    "required": false
+  },
+  "PartyRelationship": {
+    "entity": "PartyRelationship",
+    "domain": "core",
+    "kind": "record",
+    "behaviors": [],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      },
+      {
+        "name": "from_party_id",
+        "type": "link",
+        "required": true,
+        "to": "Party"
+      },
+      {
+        "name": "to_party_id",
+        "type": "link",
+        "required": true,
+        "to": "Party"
+      },
+      {
+        "name": "relationship",
+        "type": "select",
+        "required": true,
+        "options": [
+          "guardian",
+          "dependent",
+          "parent_org",
+          "subsidiary",
+          "referred_by",
+          "referred",
+          "employer",
+          "employee",
+          "represents",
+          "represented_by",
+          "next_of_kin",
+          "emergency_contact",
+          "billing_contact",
+          "associate",
+          "spouse",
+          "counterparty"
+        ]
+      },
+      {
+        "name": "is_primary",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "since",
+        "type": "date",
+        "required": false
+      },
+      {
+        "name": "until",
+        "type": "date",
+        "required": false
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "is_active",
+        "type": "bool",
+        "required": false
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "delete"
+      ],
+      "user": [
+        "read",
+        "create",
+        "write"
+      ],
+      "viewer": [
+        "read"
+      ]
+    },
+    "children": {}
+  },
+  "Form24QRecord": {
+    "entity": "Form24QRecord",
+    "domain": "payroll",
+    "kind": "record",
+    "behaviors": [
+      "numberable"
+    ],
+    "fields": [
+      {
+        "name": "quarter",
+        "type": "select",
+        "required": true,
+        "options": [
+          "Q1",
+          "Q2",
+          "Q3",
+          "Q4"
+        ]
+      },
+      {
+        "name": "total_amount_paid",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "deductor_tan",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "period_end",
+        "type": "date",
+        "required": false
+      },
+      {
+        "name": "period_start",
+        "type": "date",
+        "required": false
+      },
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      },
+      {
+        "name": "fiscal_year",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "return_period",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "employee_count",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "total_tax_deducted",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "total_tax_deposited",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "deductees",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "employee_id": {
+            "type": "link",
+            "to": "Employee"
+          },
+          "employee_name": {
+            "type": "text"
+          },
+          "pan": {
+            "type": "text"
+          },
+          "amount_paid": {
+            "type": "currency"
+          },
+          "tax_deducted": {
+            "type": "currency"
+          },
+          "tax_deposited": {
+            "type": "currency"
+          }
+        }
+      },
+      {
+        "name": "challan_details",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "bsr_code": {
+            "type": "text"
+          },
+          "date_of_deposit": {
+            "type": "date"
+          },
+          "challan_serial": {
+            "type": "text"
+          },
+          "amount": {
+            "type": "currency"
+          }
+        }
+      },
+      {
+        "name": "status",
+        "type": "select",
+        "required": false,
+        "options": [
+          "not_filed",
+          "filed",
+          "revised"
+        ]
+      },
+      {
+        "name": "filed_date",
+        "type": "date",
+        "required": false
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "delete"
+      ],
+      "hr_user": [
+        "read"
+      ]
+    },
+    "children": {
+      "deductees": {
+        "shape": {
+          "employee_id": {
+            "type": "link",
+            "to": "Employee"
+          },
+          "employee_name": {
+            "type": "text"
+          },
+          "pan": {
+            "type": "text"
+          },
+          "amount_paid": {
+            "type": "currency"
+          },
+          "tax_deducted": {
+            "type": "currency"
+          },
+          "tax_deposited": {
+            "type": "currency"
+          }
+        }
+      },
+      "challan_details": {
+        "shape": {
+          "bsr_code": {
+            "type": "text"
+          },
+          "date_of_deposit": {
+            "type": "date"
+          },
+          "challan_serial": {
+            "type": "text"
+          },
+          "amount": {
+            "type": "currency"
+          }
+        }
+      }
+    },
+    "number_format": {
+      "default": "F24Q-.YYYY.-.####."
+    }
+  },
+  "Form16Record": {
+    "entity": "Form16Record",
+    "domain": "payroll",
+    "kind": "record",
+    "behaviors": [],
+    "reserved_behaviors": [
+      "printable"
+    ],
+    "fields": [
+      {
+        "name": "employee_id",
+        "type": "link",
+        "required": true,
+        "to": "Employee"
+      },
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      },
+      {
+        "name": "fiscal_year",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "part_a_generated",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "part_b_generated",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "gross_salary",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "exemptions_under_10",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "net_taxable_salary",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "deductions_chapter_vi_a",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "total_taxable_income",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "tax_payable",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "surcharge",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "cess",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "total_tax",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "tds_deducted",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "generated_date",
+        "type": "date",
+        "required": false
+      },
+      {
+        "name": "tax_regime",
+        "type": "select",
+        "required": false,
+        "options": [
+          "old",
+          "new"
+        ]
+      },
+      {
+        "name": "employer_tan",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "employer_pan",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "employer_name",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "standard_deduction",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "professional_tax_deducted",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "rebate_87a",
+        "type": "currency",
+        "required": false
+      },
+      {
+        "name": "quarterly_tds",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "quarter": {
+            "type": "text"
+          },
+          "amount": {
+            "type": "currency"
+          },
+          "receipt_number": {
+            "type": "text"
+          }
+        }
+      },
+      {
+        "name": "chapter_via_breakup",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "section": {
+            "type": "text"
+          },
+          "declared": {
+            "type": "currency"
+          },
+          "allowed": {
+            "type": "currency"
+          }
+        }
+      },
+      {
+        "name": "status",
+        "type": "select",
+        "required": false,
+        "options": [
+          "not_generated",
+          "part_a_only",
+          "complete"
+        ]
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "delete"
+      ],
+      "hr_user": [
+        "read"
+      ]
+    },
+    "children": {
+      "quarterly_tds": {
+        "shape": {
+          "quarter": {
+            "type": "text"
+          },
+          "amount": {
+            "type": "currency"
+          },
+          "receipt_number": {
+            "type": "text"
+          }
+        }
+      },
+      "chapter_via_breakup": {
+        "shape": {
+          "section": {
+            "type": "text"
+          },
+          "declared": {
+            "type": "currency"
+          },
+          "allowed": {
+            "type": "currency"
+          }
+        }
+      }
+    }
+  },
+  "FormResponse": {
+    "entity": "FormResponse",
+    "domain": "forms",
+    "kind": "transaction",
+    "behaviors": [
+      "submittable",
+      "numberable"
+    ],
+    "reserved_behaviors": [
+      "trackable"
+    ],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      },
+      {
+        "name": "form_id",
+        "type": "link",
+        "required": true,
+        "to": "Form"
+      },
+      {
+        "name": "party_id",
+        "type": "link",
+        "required": false,
+        "to": "Party"
+      },
+      {
+        "name": "lead_id",
+        "type": "link",
+        "required": false,
+        "to": "Lead"
+      },
+      {
+        "name": "respondent_email",
+        "type": "email",
+        "required": false
+      },
+      {
+        "name": "status",
+        "type": "state",
+        "required": false,
+        "flow": "FormResponseFlow"
+      },
+      {
+        "name": "completion_time_seconds",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "score",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "submitted_at",
+        "type": "date",
+        "required": false,
+        "subtype": "datetime"
+      },
+      {
+        "name": "review_verdict",
+        "type": "select",
+        "required": false,
+        "options": [
+          "unreviewed",
+          "spam",
+          "not_spam"
+        ]
+      },
+      {
+        "name": "duplicate_of_id",
+        "type": "link",
+        "required": false,
+        "to": "FormResponse"
+      },
+      {
+        "name": "reviewed_by_id",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "reviewed_at",
+        "type": "date",
+        "required": false,
+        "subtype": "datetime"
+      },
+      {
+        "name": "consent_text_at_submission",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "form_version_digest",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "consent_required_at_submission",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "consent_lawful_basis_at_submission",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "consent_confirmed_at",
+        "type": "date",
+        "required": false,
+        "subtype": "datetime"
+      },
+      {
+        "name": "answers",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "block_ref_id": {
+            "type": "text"
+          },
+          "answer_value": {
+            "type": "text"
+          },
+          "answer_numeric": {
+            "type": "number"
+          }
+        }
+      },
+      {
+        "name": "source_webpage_id",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "source_section_key",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "source_website_id",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "source_channel",
+        "type": "text",
+        "required": false
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "delete",
+        "submit"
+      ],
+      "user": [
+        "read",
+        "create",
+        "write",
+        "submit"
+      ]
+    },
+    "children": {
+      "answers": {
+        "shape": {
+          "block_ref_id": {
+            "type": "text"
+          },
+          "answer_value": {
+            "type": "text"
+          },
+          "answer_numeric": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "number_format": {
+      "default": "FR-.YYYY.-.#####"
+    },
+    "flow": {
+      "name": "FormResponseFlow",
+      "states": [
+        "draft",
+        "submitted",
+        "reviewed",
+        "archived"
+      ],
+      "initial": "draft",
+      "transitions": [
+        {
+          "from": "draft",
+          "to": "submitted",
+          "action": "Submit",
+          "role": "any"
+        },
+        {
+          "from": "submitted",
+          "to": "reviewed",
+          "action": "Mark Reviewed",
+          "role": "any"
+        },
+        {
+          "from": "submitted",
+          "to": "archived",
+          "action": "Archive",
+          "role": "any"
+        },
+        {
+          "from": "reviewed",
+          "to": "archived",
+          "action": "Archive",
+          "role": "any"
+        }
+      ]
+    }
+  },
+  "FormConsentReceipt": {
+    "entity": "FormConsentReceipt",
+    "domain": "forms",
+    "kind": "ledger",
+    "behaviors": [],
+    "reserved_behaviors": [
+      "trackable"
+    ],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": true,
+        "to": "Company"
+      },
+      {
+        "name": "form_id",
+        "type": "link",
+        "required": true,
+        "to": "Form"
+      },
+      {
+        "name": "response_id",
+        "type": "link",
+        "required": true,
+        "to": "FormResponse"
+      },
+      {
+        "name": "form_version_digest",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "consent_text",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "consent_lawful_basis",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "consent_basis_source",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "respondent_email",
+        "type": "email",
+        "required": false
+      },
+      {
+        "name": "party_id",
+        "type": "link",
+        "required": false,
+        "to": "Party"
+      },
+      {
+        "name": "consented_at",
+        "type": "date",
+        "required": true,
+        "subtype": "datetime"
+      },
+      {
+        "name": "issued_at",
+        "type": "date",
+        "required": true,
+        "subtype": "datetime"
+      },
+      {
+        "name": "signature",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "signature_alg",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "signature_key_label",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "payload_version",
+        "type": "text",
+        "required": true
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create"
+      ],
+      "user": [
+        "read",
+        "create"
+      ]
+    },
+    "children": {}
+  },
+  "FormAutomation": {
+    "entity": "FormAutomation",
+    "domain": "forms",
+    "kind": "record",
+    "behaviors": [],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "form_id",
+        "type": "link",
+        "required": true,
+        "to": "Form"
+      },
+      {
+        "name": "trigger_on",
+        "type": "select",
+        "required": false,
+        "options": [
+          "submission",
+          "update",
+          "score_threshold",
+          "manual"
+        ]
+      },
+      {
+        "name": "is_active",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "condition_block_id",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "condition_operator",
+        "type": "select",
+        "required": false,
+        "options": [
+          "equals",
+          "not_equals",
+          "gt",
+          "lt",
+          "contains",
+          "always"
+        ]
+      },
+      {
+        "name": "condition_value",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "action_type",
+        "type": "select",
+        "required": false,
+        "options": [
+          "send_email",
+          "update_party_tag",
+          "create_lead"
+        ]
+      },
+      {
+        "name": "action_payload",
+        "type": "richtext",
+        "required": false
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "delete"
+      ],
+      "user": [
+        "read",
+        "create",
+        "write"
+      ]
+    },
+    "children": {}
+  },
+  "Form": {
+    "entity": "Form",
+    "domain": "forms",
+    "kind": "record",
+    "behaviors": [],
+    "reserved_behaviors": [
+      "trackable"
+    ],
+    "fields": [
+      {
+        "name": "name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "slug",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "status",
+        "type": "select",
+        "required": false,
+        "options": [
+          "draft",
+          "published",
+          "archived"
+        ]
+      },
+      {
+        "name": "description",
+        "type": "richtext",
+        "required": false
+      },
+      {
+        "name": "presentation_mode",
+        "type": "select",
+        "required": false,
+        "options": [
+          "one_at_a_time",
+          "single_page",
+          "multi_page"
+        ]
+      },
+      {
+        "name": "blocks",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "ref_id": {
+            "type": "text"
+          },
+          "type": {
+            "type": "select",
+            "options": [
+              "short_text",
+              "long_text",
+              "number",
+              "email",
+              "phone",
+              "url",
+              "single_choice",
+              "multiple_choice",
+              "dropdown",
+              "image_choice",
+              "picture_multiple",
+              "button_choice",
+              "rating",
+              "nps",
+              "opinion_scale",
+              "likert_scale",
+              "slider",
+              "date",
+              "time",
+              "date_range",
+              "address",
+              "location",
+              "file_upload",
+              "image_upload",
+              "video_upload",
+              "audio_upload",
+              "signature",
+              "password",
+              "masked_input",
+              "rich_text",
+              "matrix",
+              "ranking",
+              "multi_field",
+              "repeater",
+              "payment",
+              "coupon",
+              "hidden",
+              "calculated",
+              "lookup",
+              "boolean",
+              "scheduling",
+              "ai_answer",
+              "conversational"
+            ]
+          },
+          "title": {
+            "type": "text"
+          },
+          "description": {
+            "type": "text"
+          },
+          "required": {
+            "type": "bool"
+          },
+          "options": {
+            "type": "text"
+          }
+        }
+      },
+      {
+        "name": "logic_rules",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "condition_block_id": {
+            "type": "text"
+          },
+          "condition_operator": {
+            "type": "select",
+            "options": [
+              "equals",
+              "not_equals",
+              "gt",
+              "lt",
+              "contains",
+              "is_not_empty"
+            ]
+          },
+          "condition_value": {
+            "type": "text"
+          },
+          "action": {
+            "type": "select",
+            "options": [
+              "jump_to",
+              "hide",
+              "end_form"
+            ]
+          },
+          "target_block_id": {
+            "type": "text"
+          }
+        }
+      },
+      {
+        "name": "consent_required",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "consent_text",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "consent_lawful_basis",
+        "type": "select",
+        "required": false,
+        "options": [
+          "consent",
+          "contract",
+          "legal_obligation",
+          "vital_interests",
+          "public_task",
+          "legitimate_interests"
+        ]
+      },
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "delete"
+      ],
+      "user": [
+        "read",
+        "create",
+        "write"
+      ]
+    },
+    "children": {
+      "blocks": {
+        "shape": {
+          "ref_id": {
+            "type": "text"
+          },
+          "type": {
+            "type": "select",
+            "options": [
+              "short_text",
+              "long_text",
+              "number",
+              "email",
+              "phone",
+              "url",
+              "single_choice",
+              "multiple_choice",
+              "dropdown",
+              "image_choice",
+              "picture_multiple",
+              "button_choice",
+              "rating",
+              "nps",
+              "opinion_scale",
+              "likert_scale",
+              "slider",
+              "date",
+              "time",
+              "date_range",
+              "address",
+              "location",
+              "file_upload",
+              "image_upload",
+              "video_upload",
+              "audio_upload",
+              "signature",
+              "password",
+              "masked_input",
+              "rich_text",
+              "matrix",
+              "ranking",
+              "multi_field",
+              "repeater",
+              "payment",
+              "coupon",
+              "hidden",
+              "calculated",
+              "lookup",
+              "boolean",
+              "scheduling",
+              "ai_answer",
+              "conversational"
+            ]
+          },
+          "title": {
+            "type": "text"
+          },
+          "description": {
+            "type": "text"
+          },
+          "required": {
+            "type": "bool"
+          },
+          "options": {
+            "type": "text"
+          }
+        }
+      },
+      "logic_rules": {
+        "shape": {
+          "condition_block_id": {
+            "type": "text"
+          },
+          "condition_operator": {
+            "type": "select",
+            "options": [
+              "equals",
+              "not_equals",
+              "gt",
+              "lt",
+              "contains",
+              "is_not_empty"
+            ]
+          },
+          "condition_value": {
+            "type": "text"
+          },
+          "action": {
+            "type": "select",
+            "options": [
+              "jump_to",
+              "hide",
+              "end_form"
+            ]
+          },
+          "target_block_id": {
+            "type": "text"
+          }
+        }
+      }
+    }
+  },
+  "cookie_consent_enabled": {
+    "name": "cookie_consent_enabled",
+    "type": "bool",
+    "required": false
+  },
+  "cookie_consent_text": {
+    "name": "cookie_consent_text",
+    "type": "text",
+    "required": false
+  },
+  "image_format": {
+    "name": "image_format",
+    "type": "select",
+    "required": false,
+    "options": [
+      "auto",
+      "webp",
+      "avif",
+      "original"
+    ]
+  },
+  "performance_score": {
+    "name": "performance_score",
+    "type": "number",
+    "required": false
+  },
+  "forms_found": {
+    "name": "forms_found",
+    "type": "number",
+    "required": false
+  },
+  "platform": {
+    "type": "select",
+    "options": [
+      "facebook",
+      "twitter",
+      "instagram",
+      "linkedin",
+      "youtube",
+      "pinterest",
+      "tiktok",
+      "whatsapp",
+      "telegram",
+      "github"
+    ]
+  },
+  "to_party_id": {
+    "name": "to_party_id",
+    "type": "link",
+    "required": false,
+    "to": "Party"
+  },
+  "response": {
+    "type": "text"
+  },
+  "claim_party_id": {
+    "name": "claim_party_id",
+    "type": "link",
+    "required": false,
+    "to": "Party"
+  },
+  "consent_reason": {
+    "name": "consent_reason",
+    "type": "text",
+    "required": false
+  },
+  "issue": "DN-.YYYY.-.#####.",
+  "transfer": "STE-.YYYY.-.#####.",
+  "manufacture": "MFG-.YYYY.-.#####.",
+  "return": "RTN-.YYYY.-.#####.",
+  "CannedResponse": {
+    "entity": "CannedResponse",
+    "domain": "support",
+    "kind": "record",
+    "behaviors": [],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": false,
+        "to": "Company"
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "title",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "body",
+        "type": "richtext",
+        "required": true
+      },
+      {
+        "name": "category",
+        "type": "select",
+        "required": false,
+        "options": [
+          "general",
+          "billing",
+          "technical",
+          "greeting",
+          "closing",
+          "escalation",
+          "operations",
+          "returns",
+          "insurance",
+          "reporting"
+        ]
+      },
+      {
+        "name": "shortcode",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "is_active",
+        "type": "bool",
+        "required": false
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "delete"
+      ],
+      "support_user": [
+        "read",
+        "create",
+        "write"
+      ]
+    },
+    "children": {}
+  },
+  "first_response_at": {
+    "name": "first_response_at",
+    "type": "text",
+    "required": false
+  },
+  "sla_response_due": {
+    "name": "sla_response_due",
+    "type": "text",
+    "required": false
+  },
+  "sla_response_breached": {
+    "name": "sla_response_breached",
+    "type": "bool",
+    "required": false
+  },
+  "response_count": {
+    "name": "response_count",
+    "type": "number",
+    "required": false
+  },
+  "response_hours": {
+    "type": "number"
+  },
+  "RoutingFormResponse": {
+    "entity": "RoutingFormResponse",
+    "domain": "scheduling",
+    "kind": "record",
+    "behaviors": [],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": true,
+        "to": "Company"
+      },
+      {
+        "name": "routing_form_id",
+        "type": "link",
+        "required": true,
+        "to": "RoutingForm"
+      },
+      {
+        "name": "respondent_name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "respondent_email",
+        "type": "email",
+        "required": true
+      },
+      {
+        "name": "answers",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "key": {
+            "type": "text",
+            "required": true
+          },
+          "label": {
+            "type": "text"
+          },
+          "value": {
+            "type": "text"
+          }
+        }
+      },
+      {
+        "name": "destination_type",
+        "type": "select",
+        "required": false,
+        "options": [
+          "scheduling_link",
+          "host_pool",
+          "external_url"
+        ]
+      },
+      {
+        "name": "destination_link_id",
+        "type": "link",
+        "required": false,
+        "to": "SchedulingLink"
+      },
+      {
+        "name": "status",
+        "type": "state",
+        "required": false,
+        "flow": "RoutingFormResponseFlow"
+      },
+      {
+        "name": "booking_id",
+        "type": "link",
+        "required": false,
+        "to": "MeetingBooking"
+      },
+      {
+        "name": "submitted_at",
+        "type": "date",
+        "required": true,
+        "subtype": "datetime"
+      },
+      {
+        "name": "booked_at",
+        "type": "date",
+        "required": false,
+        "subtype": "datetime"
+      },
+      {
+        "name": "abandoned_at",
+        "type": "date",
+        "required": false,
+        "subtype": "datetime"
+      },
+      {
+        "name": "idempotency_key",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "booking_capability",
+        "type": "text",
+        "required": true
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "submit",
+        "delete"
+      ]
+    },
+    "children": {
+      "answers": {
+        "shape": {
+          "key": {
+            "type": "text",
+            "required": true
+          },
+          "label": {
+            "type": "text"
+          },
+          "value": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "flow": {
+      "name": "RoutingFormResponseFlow",
+      "states": [
+        "submitted",
+        "booked",
+        "abandoned"
+      ],
+      "initial": "submitted",
+      "transitions": [
+        {
+          "from": "submitted",
+          "to": "booked",
+          "action": "Mark Booked",
+          "role": "system"
+        },
+        {
+          "from": "submitted",
+          "to": "abandoned",
+          "action": "Abandon",
+          "role": "admin"
+        }
+      ]
+    }
+  },
+  "response_at": {
+    "name": "response_at",
+    "type": "text",
+    "required": false
+  },
+  "routing_form_response_id": {
+    "name": "routing_form_response_id",
+    "type": "link",
+    "required": false,
+    "to": "RoutingFormResponse"
+  },
+  "grantee_party_id": {
+    "name": "grantee_party_id",
+    "type": "link",
+    "required": false,
+    "to": "Party"
+  },
+  "collect_consent": {
+    "name": "collect_consent",
+    "type": "bool",
+    "required": false
+  },
+  "RoutingForm": {
+    "entity": "RoutingForm",
+    "domain": "scheduling",
+    "kind": "record",
+    "behaviors": [],
+    "fields": [
+      {
+        "name": "company_id",
+        "type": "link",
+        "required": true,
+        "to": "Company"
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "slug",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "description",
+        "type": "richtext",
+        "required": false
+      },
+      {
+        "name": "is_active",
+        "type": "bool",
+        "required": false
+      },
+      {
+        "name": "questions",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "key": {
+            "type": "text",
+            "required": true
+          },
+          "label": {
+            "type": "text",
+            "required": true
+          },
+          "type": {
+            "type": "select",
+            "options": [
+              "short_text",
+              "single_select",
+              "radio",
+              "dropdown"
+            ],
+            "required": true
+          },
+          "required": {
+            "type": "bool",
+            "default": true
+          },
+          "options": {
+            "type": "text"
+          },
+          "order": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      },
+      {
+        "name": "rules",
+        "type": "children",
+        "required": false,
+        "shape": {
+          "condition_field": {
+            "type": "text",
+            "required": true
+          },
+          "condition_operator": {
+            "type": "select",
+            "options": [
+              "eq",
+              "ne",
+              "in",
+              "not_in",
+              "contains"
+            ],
+            "required": true
+          },
+          "condition_value": {
+            "type": "text",
+            "required": true
+          },
+          "destination_type": {
+            "type": "select",
+            "options": [
+              "scheduling_link",
+              "host_pool",
+              "external_url"
+            ],
+            "required": true
+          },
+          "destination_id": {
+            "type": "text",
+            "required": true
+          },
+          "priority": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      },
+      {
+        "name": "fallback_link_id",
+        "type": "link",
+        "required": false,
+        "to": "SchedulingLink"
+      },
+      {
+        "name": "scheduling_link_id",
+        "type": "link",
+        "required": false,
+        "to": "SchedulingLink"
+      },
+      {
+        "name": "views_count",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "completions_count",
+        "type": "number",
+        "required": false
+      }
+    ],
+    "permissions": {
+      "admin": [
+        "read",
+        "create",
+        "write",
+        "delete"
+      ],
+      "scheduling_user": [
+        "read",
+        "create",
+        "write"
+      ],
+      "viewer": [
+        "read"
+      ]
+    },
+    "children": {
+      "questions": {
+        "shape": {
+          "key": {
+            "type": "text",
+            "required": true
+          },
+          "label": {
+            "type": "text",
+            "required": true
+          },
+          "type": {
+            "type": "select",
+            "options": [
+              "short_text",
+              "single_select",
+              "radio",
+              "dropdown"
+            ],
+            "required": true
+          },
+          "required": {
+            "type": "bool",
+            "default": true
+          },
+          "options": {
+            "type": "text"
+          },
+          "order": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      },
+      "rules": {
+        "shape": {
+          "condition_field": {
+            "type": "text",
+            "required": true
+          },
+          "condition_operator": {
+            "type": "select",
+            "options": [
+              "eq",
+              "ne",
+              "in",
+              "not_in",
+              "contains"
+            ],
+            "required": true
+          },
+          "condition_value": {
+            "type": "text",
+            "required": true
+          },
+          "destination_type": {
+            "type": "select",
+            "options": [
+              "scheduling_link",
+              "host_pool",
+              "external_url"
+            ],
+            "required": true
+          },
+          "destination_id": {
+            "type": "text",
+            "required": true
+          },
+          "priority": {
+            "type": "number",
+            "default": 0
+          }
+        }
+      }
+    }
+  }
+}
