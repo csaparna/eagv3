@@ -16,8 +16,8 @@ class FormsTestClient:
 
     def __init__(self, offline: Optional[bool] = None):
         self.validator = SchemaValidator()
-        self._base_url = os.environ.get("AS")
-        self._token = os.environ.get("TOKEN")
+        self._base_url = os.environ.get("AGENTSWITCH_BASE_URL") or os.environ.get("AS")
+        self._token = os.environ.get("AGENTSWITCH_TOKEN") or os.environ.get("TOKEN")
 
         if offline is not None:
             self.offline = offline
@@ -85,8 +85,38 @@ class FormsTestClient:
                 data = json.loads(resp.read().decode("utf-8"))
                 if "error" in data:
                     return {"is_error": True, "error": data["error"]}
-                result = data.get("result", {})
-                return {"is_error": result.get("isError", False), "result": result}
+                raw_result = data.get("result", {})
+                is_error = bool(raw_result.get("isError", False))
+
+                parsed: Dict[str, Any] = {}
+                if isinstance(raw_result, dict) and "content" in raw_result and isinstance(raw_result["content"], list):
+                    text_parts = [c.get("text", "") for c in raw_result["content"] if c.get("type") == "text"]
+                    text = "".join(text_parts).strip()
+                    if text:
+                        try:
+                            loaded = json.loads(text)
+                            if isinstance(loaded, dict):
+                                parsed = loaded
+                            elif isinstance(loaded, list):
+                                parsed = {"data": loaded}
+                            else:
+                                parsed = {"value": loaded}
+                        except Exception:
+                            parsed = {"raw_text": text}
+                elif isinstance(raw_result, dict):
+                    parsed = raw_result.copy()
+
+                if isinstance(parsed, dict):
+                    if "data" in parsed and isinstance(parsed["data"], dict):
+                        for k, v in parsed["data"].items():
+                            if k not in parsed:
+                                parsed[k] = v
+                    if "content" in raw_result and "content" not in parsed:
+                        parsed["content"] = raw_result["content"]
+                    parsed["isError"] = is_error
+                    return {"is_error": is_error, "error": parsed if is_error else None, "result": parsed}
+
+                return {"is_error": is_error, "result": parsed}
         except urllib.error.HTTPError as http_err:
             try:
                 err_body = json.loads(http_err.read().decode("utf-8"))
@@ -129,6 +159,9 @@ class FormsTestClient:
 
     def _mock_tool_response(self, name: str, args: Dict[str, Any]) -> Dict[str, Any]:
         if name == "endpoint.storefront.locale":
+            instance = os.environ.get("AGENTSWITCH_INSTANCE", "suryodaya").lower()
+            if instance == "keystone":
+                return {"is_error": False, "result": {"country_code": "US", "currency_code": "USD", "tax_regime": "sales_use_tax", "accounting_standard": "US GAAP"}}
             return {"is_error": False, "result": {"country_code": "IN", "currency_code": "INR", "tax_regime": "GST", "accounting_standard": "Ind AS"}}
         if name == "Form.create":
             return {"is_error": False, "result": {"id": "form_sub_onb_001", "name": args.get("name"), "status": "draft"}}

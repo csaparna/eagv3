@@ -19,8 +19,9 @@ class UIChatListener:
         """Resolves the Forms Agent persona from AgentPersona.list."""
         resp = self.client.call_tool("AgentPersona.list", {"search": "Forms", "limit": 10})
         if not resp.get("is_error"):
-            data = resp.get("result", {}).get("data", [])
-            if data:
+            res_obj = resp.get("result", {})
+            data = res_obj.get("data", []) if isinstance(res_obj, dict) else (res_obj if isinstance(res_obj, list) else [])
+            if data and isinstance(data, list):
                 return data[0].get("id")
         return None
 

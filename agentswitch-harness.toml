@@ -1,0 +1,5 @@
+install = "pip install -r requirements.txt"   # or "uv sync"
+run     = "python -m harness.runner --out results.json"
+results = "results.json"
+instances = ["suryodaya"]                      # and/or "keystone"
+timeout_minutes = 20

@@ -43,7 +43,10 @@ class FormsAgentRunner:
                     node.state = "failed"
                     node.error = str(res.get("error"))
                     break
-                locale_data = res.get("result", {})
+                res_obj = res.get("result", {})
+                locale_data = res_obj.copy() if isinstance(res_obj, dict) else {}
+                if isinstance(res_obj.get("data"), dict):
+                    locale_data.update(res_obj["data"])
                 node.result = locale_data
                 node.state = "success"
 
@@ -60,8 +63,27 @@ class FormsAgentRunner:
                     node.state = "failed"
                     node.error = str(res.get("error"))
                     break
-                created_form_id = res.get("result", {}).get("id")
-                node.result = res.get("result")
+                res_obj = res.get("result", {})
+                created_form_id = None
+                if isinstance(res_obj, dict):
+                    created_form_id = res_obj.get("id")
+                    if not created_form_id and isinstance(res_obj.get("data"), dict):
+                        created_form_id = res_obj["data"].get("id")
+                    if not created_form_id and "content" in res_obj:
+                        for c in res_obj.get("content", []):
+                            try:
+                                d = json.loads(c.get("text", ""))
+                                if isinstance(d, dict):
+                                    created_form_id = d.get("id") or (d.get("data", {}).get("id") if isinstance(d.get("data"), dict) else None)
+                                    if created_form_id:
+                                        break
+                            except Exception:
+                                pass
+                if not created_form_id:
+                    node.state = "failed"
+                    node.error = f"Form.create succeeded but could not extract form ID: {res_obj}"
+                    break
+                node.result = res_obj
                 node.state = "success"
 
             elif node.node_id == "step_1_4_publish":
@@ -87,7 +109,7 @@ class FormsAgentRunner:
         all_success = all(n.state == "success" for n in plan.nodes)
         form_name = synthesized_form.get("name", "Supplier Onboarding Form")
         form_slug = synthesized_form.get("slug", "supplier-onboarding")
-        as_base = os.environ.get("AS", "https://agentswitch.theschoolofai.in").rstrip("/")
+        as_base = (os.environ.get("AGENTSWITCH_BASE_URL") or os.environ.get("AS") or "https://agentswitch.theschoolofai.in").rstrip("/")
         ui_link = f"{as_base}/p/form/{form_slug}"
 
         final_reply = (

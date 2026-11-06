@@ -1,0 +1,14 @@
+{
+  "roles": [
+    "user",
+    "agent_user",
+    "sales_viewer"
+  ],
+  "allowed_apps": [
+    "forms",
+    "agent",
+    "crm"
+  ],
+  "company_id": "5cbe5a55-af74-4363-a436-f5350593114c",
+  "team": ""
+}

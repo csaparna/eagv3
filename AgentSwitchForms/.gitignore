@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.pyc
+*.lock
+uv.lock
+results.json
+.venv/
+.pytest_cache/
